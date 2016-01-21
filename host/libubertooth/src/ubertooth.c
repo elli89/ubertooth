@@ -90,6 +90,15 @@ void stop_transfers(int sig __attribute__((unused))) {
 		timeout_dev->stop_ubertooth = 1;
 }
 
+/**
+ * @brief Set timeout for an ubertooth data transmission
+ * @details This method sets an alarm. When the alarm occurs,
+ * stop_ubertooth will be set and all USB bulk transfers will
+ * be stopped.
+ *
+ * @param ut Ubertooth device which shall be stopped
+ * @param seconds timeout in seconds
+ */
 void ubertooth_set_timeout(ubertooth_t* ut, int seconds) {
 	/* Upon SIGALRM, call stop_transfers() */
 	if (signal(SIGALRM, stop_transfers) == SIG_ERR) {
@@ -252,6 +261,15 @@ void ubertooth_bulk_thread_stop()
 	pthread_join(poll_thread, NULL);
 }
 
+/**
+ * @brief initialize a USB bulk transfer to an Ubertooth device
+ * @details This method allocates memory for the double buffer and
+ * submits a USB bulk transfer to an Ubertooth device using libusb
+ *
+ * @param ut Ubertooth device to connect to
+ * @retval 0 success
+ * @retval -1 error
+ */
 int ubertooth_bulk_init(ubertooth_t* ut)
 {
 	int r;
