@@ -396,20 +396,26 @@ void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unus
 	// receive and process each packet
 	while(!ut->stop_ubertooth) {
 		ubertooth_bulk_receive(ut, cb_afh_r, pn);
-		if(lasttime < time(NULL)) {
-			lasttime = time(NULL);
-			printf("%u ", (uint32_t)time(NULL));
+		uint8_t* afh_map = btbb_piconet_get_afh_map(pn);
+		r = fwrite(afh_map, 1, 10, stdout);
+		if(r != 10) {
+			fprintf(stderr, "Error writing to file (%d)\n", r);
+			return;
+		}
+		fflush(stdout);
+		// if(lasttime < time(NULL)) {
+		// 	lasttime = time(NULL);
+		// 	printf("%u ", (uint32_t)time(NULL));
 			// btbb_print_afh_map(pn);
 
-			uint8_t* afh_map = btbb_piconet_get_afh_map(pn);
-			for (i=0; i<10; i++)
-				for (j=0; j<8; j++)
-					if (afh_map[i] & (1<<j))
-						printf("1");
-					else
-						printf("0");
-			printf("\n");
-		}
+			// for (i=0; i<10; i++)
+			// 	for (j=0; j<8; j++)
+			// 		if (afh_map[i] & (1<<j))
+			// 			printf("1");
+			// 		else
+			// 			printf("0");
+			// printf("\n");
+		// }
 	}
 
 	ubertooth_bulk_thread_stop();

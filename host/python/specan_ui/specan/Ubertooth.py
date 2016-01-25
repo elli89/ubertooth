@@ -25,12 +25,17 @@ import struct
 import numpy
 import time
 import subprocess
+import signal
 
 
 class Ubertooth(object):
 
     def __init__(self):
         self.proc = None
+        self.stop_ubertooth = False
+
+    def sigint_handler(self, signal, frame):
+        self.stop_ubertooth = True
 
     def specan(self, low_frequency, high_frequency, ubertooth_device=-1):
         spacing_hz = 1e6
@@ -72,6 +77,28 @@ class Ubertooth(object):
                         rssi_values.fill(default_raw_rssi + rssi_offset)
                     rssi_values[index] = raw_rssi_value + rssi_offset
 
+    def afh(self, uap, lap, timeout, threshold):
+        signal.signal(signal.SIGINT, self.sigint_handler)
+        args = ["ubertooth-afh", "-u%s" % uap, "-l%s" % lap, "-t%d" % timeout, "-m%d" % threshold, "-r"]
+        self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Give it a chance to time out if it fails to find Ubertooth
+        time.sleep(0.5)
+        if self.proc.poll() is not None:
+            print("Could not open Ubertooth device")
+            print("Failed to run: ", ' '.join(args))
+            return
+        while self.proc.poll() is None:
+            data = self.proc.stdout.read(10)
+            if(len(data) == 10):
+                for i in range(10):
+                    for j in range(8):
+                        print((data[i] >> j) & 0x01, end='')
+                print()
+            if self.stop_ubertooth:
+                self.close()
+                break
+
     def close(self):
         if self.proc and not self.proc.poll():
             self.proc.terminate()
@@ -81,12 +108,13 @@ class Ubertooth(object):
 
 if __name__ == '__main__':
     ubertooth = Ubertooth()
-    frame_source = ubertooth.specan(2.402e9, 2.480e9)
+    ubertooth.afh("af", "e2ccb0", 30, 270)
+    # frame_source = ubertooth.specan(2.402e9, 2.480e9)
 
-    try:
-        for frame in frame_source:
-            print(frame)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        ubertooth.close()
+    # try:
+    #     for frame in frame_source:
+    #         print(frame)
+    # except KeyboardInterrupt:
+    #     pass
+    # finally:
+    #     ubertooth.close()
