@@ -50,6 +50,14 @@ pthread_t poll_thread;
 
 unsigned int packet_counter_max;
 
+/**
+ * @defgroup libubertooth Ubertooth Library
+ * @{
+ */
+
+/**
+ * @brief Print the version of libubertooth and libbtbb
+ */
 void print_version() {
 	printf("libubertooth %s (%s), libbtbb %s (%s)\n", VERSION, RELEASE,
 	       btbb_get_version(), btbb_get_release());
@@ -69,6 +77,14 @@ static void cleanup_exit(int sig __attribute__((unused)))
 	exit(0);
 }
 
+/**
+ * @brief Catch exit signals and shutdown ubertooth on program exit
+ * @details This method connects SIGINT, SGIQUIT and SIGTERM to a
+ * handler which stops the Ubertooth device in a clean way.
+ *
+ * @param ut Ubertooth device which shall be stopped
+ * @param do_exit quit application immediately
+ */
 void register_cleanup_handler(ubertooth_t* ut, int do_exit) {
 	cleanup_devh = ut;
 
@@ -262,7 +278,7 @@ void ubertooth_bulk_thread_stop()
 }
 
 /**
- * @brief initialize a USB bulk transfer to an Ubertooth device
+ * @brief Initialize a USB bulk transfer to an Ubertooth device
  * @details This method allocates memory for the double buffer and
  * submits a USB bulk transfer to an Ubertooth device using libusb
  *
@@ -285,12 +301,28 @@ int ubertooth_bulk_init(ubertooth_t* ut)
 	return 0;
 }
 
+/**
+ * @brief Wait until the USB bulk receive buffer is full
+ * @details Poll the USB connection until a packet is received
+ *
+ * @param ut Ubertooth device to wait for
+ */
 void ubertooth_bulk_wait(ubertooth_t* ut)
 {
 	while (fifo_empty(ut->fifo) && !ut->stop_ubertooth)
 		usleep(1);
 }
 
+/**
+ * @brief Handle USB bulk transfers
+ * @details This method polls the USB connection. If a USB bulk transfer is
+ * received, it appends each transferred packet to the ringbuffer and calls the
+ * callback function.
+ *
+ * @param ut Ubertooth device to wait for
+ * @param cb function pointer to callback function
+ * @param cb_args arguments of callback function
+ */
 int ubertooth_bulk_receive(ubertooth_t* ut, rx_callback cb, void* cb_args)
 {
 	if (!fifo_empty(ut->fifo)) {
@@ -496,7 +528,9 @@ static void cb_dump_full(ubertooth_t* ut, void* args __attribute__((unused)))
 	}
 }
 
-/* dump received symbols to stdout */
+/**
+ * @brief Dump received symbols to stdout
+ */
 void rx_dump(ubertooth_t* ut, int bitstream)
 {
 	if (bitstream)
@@ -536,6 +570,10 @@ void ubertooth_stop(ubertooth_t* ut)
 	}
 }
 
+/**
+ * @brief Allocate memory for a new Ubertooth instance
+ * @returns Ubertooth instance
+ */
 ubertooth_t* ubertooth_init()
 {
 	ubertooth_t* ut = (ubertooth_t*)malloc(sizeof(ubertooth_t));
@@ -564,6 +602,13 @@ ubertooth_t* ubertooth_init()
 	return ut;
 }
 
+/**
+ * @brief Connect an Ubertooth instance to an Ubertooth device
+ * @param ut Ubertooth instance
+ * @param ubertooth_device Ubertooth device index
+ * @retval 1 success
+ * @retval -1 error
+ */
 int ubertooth_connect(ubertooth_t* ut, int ubertooth_device)
 {
 	int r = libusb_init(NULL);
@@ -589,6 +634,11 @@ int ubertooth_connect(ubertooth_t* ut, int ubertooth_device)
 	return 1;
 }
 
+/**
+ * @brief Create an Ubertooth instance and connect it to an Ubertooth device
+ * @param ubertooth_device Ubertooth device index
+ * @returns Ubertooth instance
+ */
 ubertooth_t* ubertooth_start(int ubertooth_device)
 {
 	ubertooth_t* ut = ubertooth_init();

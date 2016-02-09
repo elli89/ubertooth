@@ -26,27 +26,27 @@
 #include "ubertooth_fifo.h"
 #include <btbb.h>
 
-/* specan output types
+/** @brief specan output types
  * see https://github.com/dkogan/feedgnuplot for plotter */
-enum specan_modes {
+typedef enum {
 	SPECAN_STDOUT         = 0,
 	SPECAN_GNUPLOT_NORMAL = 1,
 	SPECAN_GNUPLOT_3D     = 2,
 	SPECAN_FILE           = 3
-};
+} specan_modes;
 
-enum board_ids {
+typedef enum {
 	BOARD_ID_UBERTOOTH_ZERO = 0,
 	BOARD_ID_UBERTOOTH_ONE  = 1,
 	BOARD_ID_TC13BADGE      = 2
-};
+} board_ids;
 
 typedef struct {
-	/* Ringbuffers for USB and Bluetooth symbols */
-	fifo_t* fifo;
+	fifo_t* fifo;/**< FIFO for received USB packets*/
 
-	struct libusb_device_handle* devh;
-	struct libusb_transfer* rx_xfer;
+	struct libusb_device_handle* devh;/**< USB device handel*/
+	struct libusb_transfer* rx_xfer;/**< USB transfer object*/
+
 
 	uint8_t stop_ubertooth;
 	uint64_t abs_start_ns;

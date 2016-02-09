@@ -29,6 +29,11 @@
 
 unsigned int packet_counter_max;
 
+/**
+ * @defgroup callback Callback functions
+ * @{
+ */
+
 static int8_t cc2400_rssi_to_dbm( const int8_t rssi )
 {
 	/* models the cc2400 datasheet fig 22 for 1M as piece-wise linear */

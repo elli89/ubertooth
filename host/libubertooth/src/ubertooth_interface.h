@@ -31,7 +31,7 @@
 
 #define NUM_BREDR_CHANNELS 79
 
-/*
+/**
  * CLK_TUNE_TIME is the duration in units of 100 ns that we reserve for tuning
  * the radio while frequency hopping.  We start the tuning process
  * CLK_TUNE_TIME * 100 ns prior to the start of an upcoming time slot.
@@ -153,7 +153,7 @@ enum usb_pkt_status {
 	DISCARD       = 0x20,
 };
 
-/*
+/**
  * USB packet for Bluetooth RX (64 total bytes)
  */
 typedef struct {
@@ -162,10 +162,10 @@ typedef struct {
 	u8     channel;
 	u8     clkn_high;
 	u32    clk100ns;
-	int8_t rssi_max;   // Max RSSI seen while collecting symbols in this packet
-	int8_t rssi_min;   // Min ...
-	int8_t rssi_avg;   // Average ...
-	u8     rssi_count; // Number of ... (0 means RSSI stats are invalid)
+	int8_t rssi_max;   ///< Max RSSI seen while collecting symbols in this packet
+	int8_t rssi_min;   ///< Min RSSI seen while collecting symbols in this packet
+	int8_t rssi_avg;   ///< Average RSSI seen while collecting symbols in this packet
+	u8     rssi_count;   ///< Number of ... (0 means RSSI stats are invalid)
 	u8     reserved[2];
 	u8     data[DMA_SIZE];
 } usb_pkt_rx;

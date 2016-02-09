@@ -26,6 +26,10 @@
 #define CTRL_IN     (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN)
 #define CTRL_OUT    (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT)
 
+/**
+ * @defgroup control Ubertooth control channel
+ * @{
+ */
 void show_libusb_error(int error_code)
 {
 	char *error_hint = "";
