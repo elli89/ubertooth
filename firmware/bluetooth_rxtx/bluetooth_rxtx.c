@@ -462,12 +462,13 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		dma_discard = 1;
 		DIO_SSEL_SET;
 		clk100ns_offset = (data[4] << 8) | (data[5] << 0);
-		requested_mode = MODE_BT_FOLLOW;
+		requested_mode = MODE_RX_SYMBOLS;
+		*data_len = 6;
 		break;
 
 	case UBERTOOTH_AFH:
 		hop_mode = HOP_AFH;
-		requested_mode = MODE_AFH;
+		requested_mode = MODE_RX_SYMBOLS;
 
 		for(int i=0; i < 10; i++) {
 			afh_map[i] = 0;
@@ -1250,7 +1251,7 @@ void bt_stream_rx()
 
 	cs_trigger_enable();
 
-	while ( requested_mode == MODE_RX_SYMBOLS || requested_mode == MODE_BT_FOLLOW )
+	while ( requested_mode == MODE_RX_SYMBOLS )
 	{
 
 		RXLED_CLR;
@@ -2536,10 +2537,6 @@ int main()
 					wait(1);
 					reset();
 					break;
-				case MODE_AFH:
-					mode = MODE_AFH;
-					bt_stream_rx();
-					break;
 				case MODE_RX_SYMBOLS:
 					mode = MODE_RX_SYMBOLS;
 					bt_stream_rx();
@@ -2547,10 +2544,6 @@ int main()
 				case MODE_TX_SYMBOLS:
 					mode = MODE_TX_SYMBOLS;
 					br_transmit();
-					break;
-				case MODE_BT_FOLLOW:
-					mode = MODE_BT_FOLLOW;
-					bt_stream_rx();
 					break;
 				case MODE_BT_FOLLOW_LE:
 					bt_follow_le();

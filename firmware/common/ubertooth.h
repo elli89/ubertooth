@@ -40,13 +40,11 @@ enum operating_modes {
 	MODE_RANGE_TEST    = 5,
 	MODE_REPEATER      = 6,
 	MODE_LED_SPECAN    = 7,
-	MODE_BT_FOLLOW     = 8,
 	MODE_BT_FOLLOW_LE  = 9,
 	MODE_BT_PROMISC_LE = 10,
 	MODE_RESET         = 11,
 	MODE_BT_SLAVE_LE   = 12,
 	MODE_EGO           = 13,
-	MODE_AFH           = 14,
 	MODE_RX_GENERIC    = 15,
 	MODE_TX_GENERIC    = 16,
 };
