@@ -40,15 +40,9 @@
 #endif
 
 
-uint32_t systime;
-FILE* infile = NULL;
-FILE* dumpfile = NULL;
-int max_ac_errors = 2;
-
 int do_exit = 1;
 pthread_t poll_thread;
 
-unsigned int packet_counter_max;
 
 void print_version() {
 	printf("libubertooth %s (%s), libbtbb %s (%s)\n", VERSION, RELEASE,
@@ -290,140 +284,6 @@ int ubertooth_bulk_receive(ubertooth_t* ut, rx_callback cb, void* cb_args)
 	}
 }
 
-static int stream_rx_usb(ubertooth_t* ut, rx_callback cb, void* cb_args)
-{
-	// init USB transfer
-	int r = ubertooth_bulk_init(ut);
-	if (r < 0)
-		return r;
-
-	r = ubertooth_bulk_thread_start();
-	if (r < 0)
-		return r;
-
-	// tell ubertooth to send packets
-	r = cmd_rx_syms(ut->devh);
-	if (r < 0)
-		return r;
-
-	// receive and process each packet
-	while(!ut->stop_ubertooth) {
-		ubertooth_bulk_wait(ut);
-		r = ubertooth_bulk_receive(ut, cb, cb_args);
-	}
-
-	ubertooth_bulk_thread_stop();
-
-	return 1;
-}
-
-/* file should be in full USB packet format (ubertooth-dump -f) */
-int stream_rx_file(ubertooth_t* ut, FILE* fp, rx_callback cb, void* cb_args)
-{
-	uint8_t buf[PKT_LEN];
-	size_t nitems;
-
-	while(1) {
-		uint32_t systime_be;
-		nitems = fread(&systime_be, sizeof(systime_be), 1, fp);
-		if (nitems != 1)
-			return 0;
-		systime = (time_t)be32toh(systime_be);
-
-		nitems = fread(buf, sizeof(buf[0]), PKT_LEN, fp);
-		if (nitems != PKT_LEN)
-			return 0;
-		fifo_push(ut->fifo, (usb_pkt_rx*)buf);
-		(*cb)(ut, cb_args);
-	}
-}
-
-void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout)
-{
-	int r = btbb_init(max_ac_errors);
-	if (r < 0)
-		return;
-
-	cmd_set_channel(ut->devh, 9999);
-
-	if (timeout) {
-		ubertooth_set_timeout(ut, timeout);
-
-		cmd_afh(ut->devh);
-		stream_rx_usb(ut, cb_afh_initial, pn);
-
-		cmd_stop(ut->devh);
-		ut->stop_ubertooth = 0;
-
-		btbb_print_afh_map(pn);
-	}
-
-	/*
-	 * Monitor changes in AFH channel map
-	 */
-	cmd_clear_afh_map(ut->devh);
-	cmd_afh(ut->devh);
-	stream_rx_usb(ut, cb_afh_monitor, pn);
-}
-
-void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unused)))
-{
-	static uint32_t lasttime;
-
-	int r = btbb_init(max_ac_errors);
-	int i, j;
-	if (r < 0)
-		return;
-
-	cmd_set_channel(ut->devh, 9999);
-
-	cmd_afh(ut->devh);
-
-	// init USB transfer
-	r = ubertooth_bulk_init(ut);
-	if (r < 0)
-		return;
-
-	r = ubertooth_bulk_thread_start();
-	if (r < 0)
-		return;
-
-	// tell ubertooth to send packets
-	r = cmd_rx_syms(ut->devh);
-	if (r < 0)
-		return;
-
-	// receive and process each packet
-	while(!ut->stop_ubertooth) {
-		ubertooth_bulk_receive(ut, cb_afh_r, pn);
-		if(lasttime < time(NULL)) {
-			lasttime = time(NULL);
-			printf("%u ", (uint32_t)time(NULL));
-			// btbb_print_afh_map(pn);
-
-			uint8_t* afh_map = btbb_piconet_get_afh_map(pn);
-			for (i=0; i<10; i++)
-				for (j=0; j<8; j++)
-					if (afh_map[i] & (1<<j))
-						printf("1");
-					else
-						printf("0");
-			printf("\n");
-		}
-	}
-
-	ubertooth_bulk_thread_stop();
-}
-
-void rx_btle_file(FILE* fp)
-{
-	ubertooth_t* ut = ubertooth_init();
-	if (ut == NULL)
-		return;
-
-	stream_rx_file(ut, fp, cb_btle, NULL);
-}
-
 void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked)
 {
 	int i, j;
@@ -434,57 +294,6 @@ void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked)
 			unpacked[i * 8 + j] = ((buf[i] << j) & 0x80) >> 7;
 		}
 	}
-}
-
-static void cb_dump_bitstream(ubertooth_t* ut, void* args __attribute__((unused)))
-{
-	int i;
-	char nl = '\n';
-
-	usb_pkt_rx usb = fifo_pop(ut->fifo);
-	usb_pkt_rx* rx = &usb;
-	char bitstream[BANK_LEN];
-	ubertooth_unpack_symbols((uint8_t*)rx->data, bitstream);
-
-	// convert to ascii
-	for (i = 0; i < BANK_LEN; ++i)
-		bitstream[i] += 0x30;
-
-	fprintf(stderr, "rx block timestamp %u * 100 nanoseconds\n",
-	        rx->clk100ns);
-	if (dumpfile == NULL) {
-		fwrite(bitstream, sizeof(uint8_t), BANK_LEN, stdout);
-		fwrite(&nl, sizeof(uint8_t), 1, stdout);
-	} else {
-		fwrite(bitstream, sizeof(uint8_t), BANK_LEN, dumpfile);
-		fwrite(&nl, sizeof(uint8_t), 1, dumpfile);
-	}
-}
-
-static void cb_dump_full(ubertooth_t* ut, void* args __attribute__((unused)))
-{
-	usb_pkt_rx usb = fifo_pop(ut->fifo);
-	usb_pkt_rx* rx = &usb;
-
-	fprintf(stderr, "rx block timestamp %u * 100 nanoseconds\n", rx->clk100ns);
-	uint32_t time_be = htobe32((uint32_t)time(NULL));
-	if (dumpfile == NULL) {
-		fwrite(&time_be, 1, sizeof(time_be), stdout);
-		fwrite((uint8_t*)rx, sizeof(uint8_t), PKT_LEN, stdout);
-	} else {
-		fwrite(&time_be, 1, sizeof(time_be), dumpfile);
-		fwrite((uint8_t*)rx, sizeof(uint8_t), PKT_LEN, dumpfile);
-		fflush(dumpfile);
-	}
-}
-
-/* dump received symbols to stdout */
-void rx_dump(ubertooth_t* ut, int bitstream)
-{
-	if (bitstream)
-		stream_rx_usb(ut, cb_dump_bitstream, NULL);
-	else
-		stream_rx_usb(ut, cb_dump_full, NULL);
 }
 
 void ubertooth_stop(ubertooth_t* ut)

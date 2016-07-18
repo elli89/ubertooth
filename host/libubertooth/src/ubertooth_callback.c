@@ -181,9 +181,14 @@ static int trim(ubertooth_t* ut, usb_pkt_rx* rx, int offset)
 static void dump(FILE* dumpfile, uint32_t systime, usb_pkt_rx* rx)
 {
 	uint32_t systime_be = htobe32(systime);
-	fwrite(&systime_be, sizeof(systime_be), 1, dumpfile);
-	fwrite(rx, sizeof(usb_pkt_rx), 1, dumpfile);
-	fflush(dumpfile);
+	if (dumpfile == NULL) {
+		fwrite(&systime_be, sizeof(systime_be), 1, stdout);
+		fwrite(rx, sizeof(usb_pkt_rx), 1, stdout);
+	} else {
+		fwrite(&systime_be, sizeof(systime_be), 1, dumpfile);
+		fwrite(rx, sizeof(usb_pkt_rx), 1, dumpfile);
+		fflush(dumpfile);
+	}
 }
 
 static void pcap(ubertooth_t* ut, usb_pkt_rx* rx, uint16_t lap, uint8_t uap, btbb_packet* pkt)
@@ -604,4 +609,39 @@ void cb_rx(ubertooth_t* ut, void* args)
 out:
 	if (pkt)
 		btbb_packet_unref(pkt);
+}
+
+void cb_dump_full(ubertooth_t* ut, void* args __attribute__((unused)))
+{
+	usb_pkt_rx usb = fifo_pop(ut->fifo);
+	usb_pkt_rx* rx = &usb;
+
+	fprintf(stderr, "rx block timestamp %u * 100 nanoseconds\n", rx->clk100ns);
+	dump(dumpfile, (uint32_t)time(NULL), rx);
+}
+
+
+void cb_dump_bitstream(ubertooth_t* ut, void* args __attribute__((unused)))
+{
+	int i;
+	char nl = '\n';
+
+	usb_pkt_rx usb = fifo_pop(ut->fifo);
+	usb_pkt_rx* rx = &usb;
+	char bitstream[BANK_LEN];
+	ubertooth_unpack_symbols((uint8_t*)rx->data, bitstream);
+
+	// convert to ascii
+	for (i = 0; i < BANK_LEN; ++i)
+		bitstream[i] += 0x30;
+
+	fprintf(stderr, "rx block timestamp %u * 100 nanoseconds\n",
+	        rx->clk100ns);
+	if (dumpfile == NULL) {
+		fwrite(bitstream, sizeof(uint8_t), BANK_LEN, stdout);
+		fwrite(&nl, sizeof(uint8_t), 1, stdout);
+	} else {
+		fwrite(bitstream, sizeof(uint8_t), BANK_LEN, dumpfile);
+		fwrite(&nl, sizeof(uint8_t), 1, dumpfile);
+	}
 }

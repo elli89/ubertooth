@@ -47,6 +47,27 @@ static void usage()
 	printf("\nIf an input file is not specified, an Ubertooth device is used for live capture.\n");
 }
 
+/* file should be in full USB packet format (ubertooth-dump -f) */
+static int stream_rx_file(ubertooth_t* ut, FILE* fp, rx_callback cb, void* cb_args)
+{
+	usb_pkt_rx* rx = (usb_pkt_rx*)malloc(sizeof(usb_pkt_rx));
+	size_t nitems;
+
+	while(1) {
+		uint32_t systime_be;
+		nitems = fread(&systime_be, sizeof(systime_be), 1, fp);
+		if (nitems != 1)
+			return 0;
+		systime = (time_t)be32toh(systime_be);
+
+		nitems = fread(rx, sizeof(usb_pkt_rx), 1, fp);
+		if (nitems != 1)
+			return 0;
+		fifo_push(ut->fifo, rx);
+		(*cb)(ut, cb_args);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	int opt, have_lap = 0, have_uap = 0;

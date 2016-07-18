@@ -20,6 +20,7 @@
  */
 
 #include "ubertooth.h"
+#include "ubertooth_callback.h"
 #include <getopt.h>
 #include <stdlib.h>
 
@@ -98,8 +99,32 @@ int main(int argc, char *argv[])
 	register_cleanup_handler(ut, 0);
 
 	cmd_set_modulation(ut->devh, modulation);
-	rx_dump(ut, bitstream);
+
+	// init USB transfer
+	r = ubertooth_bulk_init(ut);
+	if (r < 0)
+		return r;
+
+	r = ubertooth_bulk_thread_start();
+	if (r < 0)
+		return r;
+
+	// tell ubertooth to send packets
+	r = cmd_rx_syms(ut->devh);
+	if (r < 0)
+		return r;
+
+	// receive and process each packet
+	while(!ut->stop_ubertooth) {
+		if (bitstream)
+			ubertooth_bulk_receive(ut, cb_dump_bitstream, NULL);
+		else
+			ubertooth_bulk_receive(ut, cb_dump_full, NULL);
+	}
+
+	ubertooth_bulk_thread_stop();
 
 	ubertooth_stop(ut);
+
 	return 0;
 }

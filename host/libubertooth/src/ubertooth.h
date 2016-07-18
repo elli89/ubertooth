@@ -70,10 +70,10 @@ typedef struct {
 	unsigned allowed_access_address_errors;
 } btle_options;
 
-extern uint32_t systime;
-extern FILE* infile;
-extern FILE* dumpfile;
-extern int max_ac_errors;
+uint32_t systime;
+FILE* infile;
+FILE* dumpfile;
+int max_ac_errors;
 
 void print_version();
 void register_cleanup_handler(ubertooth_t* ut, int do_exit);
@@ -89,14 +89,6 @@ void ubertooth_bulk_wait(ubertooth_t* ut);
 int ubertooth_bulk_receive(ubertooth_t* ut, rx_callback cb, void* cb_args);
 int ubertooth_bulk_thread_start();
 void ubertooth_bulk_thread_stop();
-
-int stream_rx_file(ubertooth_t* ut,FILE* fp, rx_callback cb, void* cb_args);
-
-void rx_dump(ubertooth_t* ut, int full);
-void rx_btle(ubertooth_t* ut);
-void rx_btle_file(FILE* fp);
-void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout);
-void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout);
 
 void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked);
 

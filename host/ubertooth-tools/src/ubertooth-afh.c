@@ -20,6 +20,7 @@
  */
 
 #include "ubertooth.h"
+#include "ubertooth_callback.h"
 #include <err.h>
 #include <getopt.h>
 #include <stdlib.h>
@@ -43,6 +44,106 @@ static void usage()
 	printf("\t-m <int> threshold for channel removal\n");
 	printf("\t-e max_ac_errors (default: %d, range: 0-4)\n", max_ac_errors);
 	printf("\nIf an input file is not specified, an Ubertooth device is used for live capture.\n");
+}
+
+static void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout)
+{
+	int r = btbb_init(max_ac_errors);
+	if (r < 0)
+		return;
+
+	cmd_set_channel(ut->devh, 9999);
+
+	// init USB transfer
+	r = ubertooth_bulk_init(ut);
+	if (r < 0)
+		return;
+
+	r = ubertooth_bulk_thread_start();
+	if (r < 0)
+		return;
+
+	// tell ubertooth to send packets
+	r = cmd_rx_syms(ut->devh);
+	if (r < 0)
+		return;
+
+	if (timeout) {
+		ubertooth_set_timeout(ut, timeout);
+
+		cmd_afh(ut->devh);
+
+		// receive and process each packet
+		while(!ut->stop_ubertooth) {
+			ubertooth_bulk_receive(ut, cb_afh_initial, pn);
+		}
+
+		ut->stop_ubertooth = 0;
+
+		btbb_print_afh_map(pn);
+	}
+
+	/*
+	 * Monitor changes in AFH channel map
+	 */
+	cmd_clear_afh_map(ut->devh);
+	cmd_afh(ut->devh);
+
+	// receive and process each packet
+	while(!ut->stop_ubertooth) {
+		ubertooth_bulk_receive(ut, cb_afh_monitor, pn);
+	}
+
+	ubertooth_bulk_thread_stop();
+}
+
+static void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unused)))
+{
+	static uint32_t lasttime;
+
+	int r = btbb_init(max_ac_errors);
+	int i, j;
+	if (r < 0)
+		return;
+
+	cmd_set_channel(ut->devh, 9999);
+
+	cmd_afh(ut->devh);
+
+	// init USB transfer
+	r = ubertooth_bulk_init(ut);
+	if (r < 0)
+		return;
+
+	r = ubertooth_bulk_thread_start();
+	if (r < 0)
+		return;
+
+	// tell ubertooth to send packets
+	r = cmd_rx_syms(ut->devh);
+	if (r < 0)
+		return;
+
+	// receive and process each packet
+	while(!ut->stop_ubertooth) {
+		ubertooth_bulk_receive(ut, cb_afh_r, pn);
+		if(lasttime < time(NULL)) {
+			lasttime = time(NULL);
+			printf("%u ", (uint32_t)time(NULL));
+			// btbb_print_afh_map(pn);
+
+			uint8_t* afh_map = btbb_piconet_get_afh_map(pn);
+			for (i=0; i<10; i++)
+				for (j=0; j<8; j++)
+					if (afh_map[i] & (1<<j))
+						printf("1");
+					else
+						printf("0");
+			printf("\n");
+		}
+	}
+
+	ubertooth_bulk_thread_stop();
 }
 
 int main(int argc, char* argv[])
