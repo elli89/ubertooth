@@ -141,19 +141,14 @@ int main(int argc, char *argv[])
 
 	dev_id = hci_devid(bt_dev);
 	sock = hci_open_dev(dev_id);
-	hci_read_clock(sock, 0, 0, &clock, &accuracy, 0);
 
 	if ((have_lap != 1) || (have_uap != 1)) {
 		printf("No address given, reading address from device\n");
 		hci_read_bd_addr(sock, &bdaddr, 0);
 		lap = bdaddr.b[0] | bdaddr.b[1] << 8 | bdaddr.b[2] << 16;
-		btbb_init_piconet(pn, lap);
 		uap = bdaddr.b[3];
-		btbb_piconet_set_uap(pn, uap);
 		printf("LAP=%06x UAP=%02x\n", lap, uap);
 	} else if (have_lap && have_uap) {
-		btbb_init_piconet(pn, lap);
-		btbb_piconet_set_uap(pn, uap);
 		printf("Address given, assuming address is remote\n");
 		sprintf(addr, "00:00:%02X:%02X:%02X:%02X",
 			uap,
@@ -178,19 +173,18 @@ int main(int argc, char *argv[])
 		sleep(1);
 		cc = 1;
 
-		if (hci_read_clock_offset(sock, handle, &offset, 1000) < 0) {
-			perror("Reading clock offset failed");
-		}
-		clock += offset;
 	} else {
-			usage();
-			return 1;
+		usage();
+		return 1;
 	}
+
+		btbb_init_piconet(pn, lap);
+		btbb_piconet_set_uap(pn, uap);
 
 	if (ut->h_pcapng_bredr) {
 		btbb_pcapng_record_bdaddr(ut->h_pcapng_bredr,
-		                            (((uint32_t)uap)<<24)|lap,
-		                            0xff, 0);
+		                          (((uint32_t)uap)<<24)|lap,
+		                          0xff, 0);
 	}
 
 	//Experimental AFH map reading from remote device
@@ -209,10 +203,6 @@ int main(int argc, char *argv[])
 	} else {
 		printf("Not use AFH\n");
 	}
-	if (cc) {
-		usleep(10000);
-		hci_disconnect(sock, handle, HCI_OE_USER_ENDED_CONNECTION, 10000);
-	}
 
 	/* Clean up on exit. */
 	register_cleanup_handler(ut, 0);
@@ -227,9 +217,16 @@ int main(int argc, char *argv[])
 	if (r < 0)
 		return 1;
 
+	cmd_set_bdaddr(ut->devh, btbb_piconet_get_bdaddr(pn));
+	if(afh_enabled)
+		cmd_set_afh_map(ut->devh, afh_map);
+
+	btbb_piconet_set_flag(pn, BTBB_FOLLOWING, 1);
+	btbb_piconet_set_flag(pn, BTBB_CLK27_VALID, 1);
+
 	r = btbb_init(max_ac_errors);
 	if (r < 0)
-		return 1;
+		return r;
 
 	// init USB transfer
 	r = ubertooth_bulk_init(ut);
@@ -240,16 +237,25 @@ int main(int argc, char *argv[])
 	if (r < 0)
 		return r;
 
-	cmd_set_bdaddr(ut->devh, btbb_piconet_get_bdaddr(pn));
-	cmd_set_clock(ut->devh, 0);
-	if(afh_enabled)
-		cmd_set_afh_map(ut->devh, afh_map);
-	btbb_piconet_set_clk_offset(pn, clock+delay);
-	btbb_piconet_set_flag(pn, BTBB_FOLLOWING, 1);
-	btbb_piconet_set_flag(pn, BTBB_CLK27_VALID, 1);
+	// tell ubertooth to send packets
+	r = cmd_rx_syms(ut->devh);
+	if (r < 0)
+		return r;
 
-	// tell ubertooth to start hopping and send packets
-	r = cmd_start_hopping(ut->devh, btbb_piconet_get_clk_offset(pn), 0);
+	if(hci_read_clock(sock, 0, 0, &clock, &accuracy, 0) < 0) {
+		perror("Reading clock offset failed");
+	}
+	r = cmd_set_clock(ut->devh, clock+delay);
+	if (r < 0)
+		return r;
+
+	if (cc) {
+		if (hci_read_clock_offset(sock, handle, &offset, 1000) < 0) {
+			perror("Reading clock offset failed");
+		}
+	}
+
+	r = cmd_start_hopping(ut->devh, offset, 0);
 	if (r < 0)
 		return r;
 
@@ -261,6 +267,11 @@ int main(int argc, char *argv[])
 	ubertooth_bulk_thread_stop();
 
 	ubertooth_stop(ut);
+
+	if (cc) {
+		usleep(10000);
+		hci_disconnect(sock, handle, HCI_OE_USER_ENDED_CONNECTION, 10000);
+	}
 
 	return 0;
 }
