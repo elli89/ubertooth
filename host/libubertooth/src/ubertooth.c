@@ -538,6 +538,10 @@ ubertooth_t* ubertooth_init()
 	ut->last_clk100ns = 0;
 	ut->clk100ns_upper = 0;
 
+	ut->trim_counter = 0;
+	ut->calibrated = 0;
+	ut->clkn_trim = 0;
+
 	ut->h_pcap_bredr = NULL;
 	ut->h_pcap_le = NULL;
 	ut->h_pcapng_bredr = NULL;

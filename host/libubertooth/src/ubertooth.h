@@ -54,6 +54,10 @@ typedef struct {
 	uint64_t last_clk100ns;
 	uint64_t clk100ns_upper;
 
+	int8_t trim_counter;
+	uint8_t calibrated;
+	uint32_t clkn_trim;
+
 	btbb_pcap_handle* h_pcap_bredr;
 	lell_pcap_handle* h_pcap_le;
 	btbb_pcapng_handle* h_pcapng_bredr;

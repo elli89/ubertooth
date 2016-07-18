@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
 	char* end;
 	char ubertooth_device = -1;
 	btbb_piconet* pn = NULL;
-	uint32_t lap = 0;
-	uint8_t uap = 0;
+	uint32_t lap = LAP_ANY;
+	uint8_t uap = UAP_ANY;
 	uint8_t channel = 39;
 
 	ubertooth_t* ut = ubertooth_init();
@@ -170,16 +170,24 @@ int main(int argc, char* argv[])
 				if (infile == NULL)
 					cmd_set_bdaddr(ut->devh, btbb_piconet_get_bdaddr(pn));
 			}
-			if (ut->h_pcapng_bredr) {
-				btbb_pcapng_record_bdaddr(ut->h_pcapng_bredr,
-							  (((uint32_t)uap)<<24)|lap,
-							  have_uap ? 0xff : 0x00, 0);
-			}
+
 		} else if (have_uap) {
 			fprintf(stderr, "Error: UAP but no LAP specified\n");
 			usage();
 			return 1;
+		} else {
+			survey_mode = 1;
+			// auto-flush stdout so that wrapper scripts work
+			setvbuf(stdout, NULL, _IONBF, 0);
+			btbb_init_survey();
 		}
+	}
+
+	if (ut->h_pcapng_bredr) {
+		btbb_pcapng_record_bdaddr(ut->h_pcapng_bredr,
+		                          (((uint32_t)uap)<<24)|lap,
+		                          have_uap ? 0xff : 0x00,
+		                          0);
 	}
 
 	if (infile == NULL) {
@@ -214,14 +222,20 @@ int main(int argc, char* argv[])
 
 		// receive and process each packet
 		while(!ut->stop_ubertooth) {
-			ubertooth_bulk_receive(ut, cb_rx, pn);
+			if(survey_mode)
+				ubertooth_bulk_receive(ut, cb_scan, pn);
+			else
+				ubertooth_bulk_receive(ut, cb_rx, pn);
 		}
 
 		ubertooth_bulk_thread_stop();
 
 		ubertooth_stop(ut);
 	} else {
-		stream_rx_file(ut, infile, cb_rx, pn);
+		if(survey_mode)
+			stream_rx_file(ut, infile, cb_scan, pn);
+		else
+			stream_rx_file(ut, infile, cb_rx, pn);
 		fclose(infile);
 	}
 
