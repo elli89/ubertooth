@@ -62,24 +62,24 @@ static void callback(struct libusb_transfer* transfer)
 	libusb_free_transfer(transfer);
 }
 
-void cmd_trim_clock(struct libusb_device_handle* devh, uint16_t offset)
+int cmd_trim_clock(struct libusb_device_handle* devh, uint16_t offset)
 {
 	uint8_t data[2] = {
 		(offset >> 8) & 0xff,
 		(offset >> 0) & 0xff
 	};
 
-	ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_TRIM_CLOCK, data, 2);
+	return ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_TRIM_CLOCK, data, 2);
 }
 
-void cmd_fix_clock_drift(struct libusb_device_handle* devh, int16_t ppm)
+int cmd_fix_clock_drift(struct libusb_device_handle* devh, int16_t ppm)
 {
 	uint8_t data[2] = {
 		(ppm >> 8) & 0xff,
 		(ppm >> 0) & 0xff
 	};
 
-	ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_FIX_CLOCK_DRIFT, data, 2);
+	return ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_FIX_CLOCK_DRIFT, data, 2);
 }
 
 int cmd_ping(struct libusb_device_handle* devh)
@@ -668,16 +668,7 @@ int cmd_start_hopping(struct libusb_device_handle* devh, int clkn_offset, int cl
 	data[4] = (clk100ns_offset >> 8) & 0xff;
 	data[5] = (clk100ns_offset >> 0) & 0xff;
 
-	r = ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_START_HOPPING, data, 6);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_START_HOPPING, data, 6);
 }
 
 int cmd_set_clock(struct libusb_device_handle* devh, u32 clkn)
