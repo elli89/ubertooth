@@ -22,8 +22,6 @@
 #ifndef __UBERTOOTH_CALLBACK_H__
 #define __UBERTOOTH_CALLBACK_H__
 
-
-#include "ubertooth_control.h"
 #include "ubertooth.h"
 
 void cb_afh_initial(ubertooth_t* ut, void* args);
