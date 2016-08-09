@@ -82,3 +82,10 @@ endforeach(tool)
 add_executable(ubertooth-debug ubertooth-debug.c cc2400.c arglist.c)
 install(TARGETS ubertooth-debug RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
 target_link_libraries(ubertooth-debug ${TOOLS_LINK_LIBS})
+
+find_package(SDL2 REQUIRED)
+
+add_executable(ubertooth-specan-gui ubertooth-specan-gui.c)
+LIST(APPEND TOOLS_LINK_LIBS ${SDL2_LIBRARIES})
+target_link_libraries(ubertooth-specan-gui ${TOOLS_LINK_LIBS})
+install(TARGETS ubertooth-specan-gui RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
