@@ -87,5 +87,6 @@ find_package(SDL2 REQUIRED)
 
 add_executable(ubertooth-specan-gui ubertooth-specan-gui.c)
 LIST(APPEND TOOLS_LINK_LIBS ${SDL2_LIBRARIES})
+LIST(APPEND TOOLS_LINK_LIBS "-l SDL2_ttf")
 target_link_libraries(ubertooth-specan-gui ${TOOLS_LINK_LIBS})
 install(TARGETS ubertooth-specan-gui RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})

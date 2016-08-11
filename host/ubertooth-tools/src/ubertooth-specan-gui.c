@@ -22,9 +22,11 @@
 #include <getopt.h>
 #include "ubertooth.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <unistd.h>
 
 #define DEPTH 175
+#define FONT_SIZE 12
 
 // The window we'll be rendering to
 SDL_Window* gWindow = NULL;
@@ -49,8 +51,11 @@ int window_init()
 		return -1;
 	}
 
+	//Initialize SDL_TTF
+	TTF_Init();
+
 	//Create window
-	gWindow = SDL_CreateWindow( "Ubertooth spectrum analyzer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_SHOWN );
+	gWindow = SDL_CreateWindow( "Ubertooth spectrum analyzer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_RESIZABLE );
 	if( gWindow == NULL )
 	{
 		printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
@@ -81,6 +86,8 @@ void window_close()
 	gRenderer = NULL;
 	gWindow = NULL;
 
+	TTF_Quit();
+
 	//Quit SDL subsystems
 	SDL_Quit();
 }
@@ -95,30 +102,75 @@ int mhz_to_x(int freq)
 	return (freq - low_freq) * w / (high_freq - low_freq);
 }
 
+void drawText(const char* text, int x, int y)
+{
+	// Text
+	TTF_Font* Sans = TTF_OpenFont("/usr/share/fonts/TTF/DejaVuSans.ttf", FONT_SIZE);
+	SDL_Color White = {127, 127, 127, 255};
+	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(Sans, text, White);
+	SDL_Texture* Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
+
+	SDL_Rect Message_rect; //create a rect
+	Message_rect.x = x;  //controls the rect's x coordinate
+	Message_rect.y = y; // controls the rect's y coordinte
+
+	SDL_QueryTexture(Message, NULL, NULL, &Message_rect.w, &Message_rect.h);
+
+	//Mind you that (0,0) is on the top left of the window/screen, think a rect as the text's box, that way it would be very simple to understance
+
+	//Now since it's a texture, you have to put RenderCopy in your game loop area, the area where the whole code executes
+
+	SDL_RenderCopy(gRenderer, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
+
+	SDL_FreeSurface(surfaceMessage);
+	TTF_CloseFont(Sans);
+}
+
 void drawReticle()
 {
-	SDL_Rect area;
+	static SDL_Rect area;
+	static SDL_Texture* reticle;
 
-	area.x=0;
-	area.y=0;
 	SDL_GetWindowSize(gWindow, &w, &h);
-	area.w=w;
-	area.h=h;
 
-	//Clear screen
-	SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 10 );
-	SDL_RenderFillRect(gRenderer, &area);
+	if (area.w != w || area.h != h)
+	{
+		area.x=0;
+		area.y=0;
+		area.w=w;
+		area.h=h;
 
-	for (int i=low_dbm; i<=high_dbm; i+=10)
-	{
-		SDL_SetRenderDrawColor( gRenderer, 0, 0, 127, 255 );
-		SDL_RenderDrawLine( gRenderer, 0, dbm_to_y(i), w, dbm_to_y(i));
+		SDL_DestroyTexture(reticle);
+		reticle = SDL_CreateTexture( gRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h );
+		SDL_SetRenderTarget( gRenderer, reticle );
+		SDL_SetTextureBlendMode(reticle, SDL_BLENDMODE_BLEND);
+
+		//Clear screen
+		SDL_SetRenderDrawColor( gRenderer, 0, 0, 0, 255 );
+		SDL_RenderFillRect(gRenderer, &area);
+
+		for (int i=low_dbm; i<=high_dbm; i+=20)
+		{
+			SDL_SetRenderDrawColor( gRenderer, 0, 0, 127, 255 );
+			SDL_RenderDrawLine( gRenderer, 0, dbm_to_y(i), w, dbm_to_y(i));
+			char text[8];
+			sprintf(text, "%d dBm", i);
+			drawText(text, 0, dbm_to_y(i)-FONT_SIZE-1);
+		}
+		for (int i=low_freq; i<=high_freq; i+=10)
+		{
+			SDL_SetRenderDrawColor( gRenderer, 0, 0, 127, 255 );
+			SDL_RenderDrawLine( gRenderer, mhz_to_x(i), 0, mhz_to_x(i), h);
+			char text[9];
+			sprintf(text, "%d MHz", i);
+			drawText(text, mhz_to_x(i), 0);
+		}
+
+		SDL_SetRenderTarget(gRenderer, NULL );
 	}
-	for (int i=low_freq; i<=high_freq; i+=10)
-	{
-		SDL_SetRenderDrawColor( gRenderer, 0, 0, 127, 255 );
-		SDL_RenderDrawLine( gRenderer, mhz_to_x(i), 0, mhz_to_x(i), h);
-	}
+
+	SDL_RenderCopy(gRenderer, reticle, NULL, &area);
+	SDL_SetTextureAlphaMod(reticle, 10);
 }
 
 void drawLine()
