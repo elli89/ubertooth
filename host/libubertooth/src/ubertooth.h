@@ -93,7 +93,7 @@ void rx_dump(ubertooth_t* ut, int full);
 // void rx_btle(ubertooth_t* ut);
 // void rx_btle_file(FILE* fp); // FIXME This function is decladed but never used. Delete it?
 void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout);
-void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout);
+void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn);
 
 void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked);
 

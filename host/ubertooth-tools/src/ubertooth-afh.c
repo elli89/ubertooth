@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 	register_cleanup_handler(ut, 0);
 
 	if (use_r_format)
-		rx_afh_r(ut, pn, timeout);
+		rx_afh_r(ut, pn);
 	else
 		rx_afh(ut, pn, timeout);
 

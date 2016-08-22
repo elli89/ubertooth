@@ -3,6 +3,7 @@
 *.so.*
 *.pyc
 host/build/*
+host/*/doc
 
 # firmware build output
 *.bin

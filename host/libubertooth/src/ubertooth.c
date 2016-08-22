@@ -443,7 +443,7 @@ void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout)
  * @param  ut       Ubertooth instance
  * @param  pn       The observed piconet
  */
-void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unused)))
+void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn)
 {
 	static uint32_t lasttime;
 
