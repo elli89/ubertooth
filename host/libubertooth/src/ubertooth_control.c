@@ -32,8 +32,8 @@
  */
 void show_libusb_error(int error_code)
 {
-	char *error_hint = "";
-	const char *error_name;
+	char* error_hint = "";
+	const char* error_name;
 
 	/* Available only in libusb > 1.0.3 */
 	// error_name = libusb_error_name(error_code);
@@ -1061,3 +1061,7 @@ int ubertooth_cmd_async(struct libusb_device_handle* devh,
 
 	return r;
 }
+
+/**
+ * @}
+ */

@@ -63,7 +63,7 @@ void print_version() {
 	       btbb_get_version(), btbb_get_release());
 }
 
-ubertooth_t* cleanup_devh = NULL;
+static ubertooth_t* cleanup_devh = NULL;
 static void cleanup(int sig __attribute__((unused)))
 {
 	if (cleanup_devh)
@@ -100,8 +100,8 @@ void register_cleanup_handler(ubertooth_t* ut, int do_exit) {
 	}
 }
 
-ubertooth_t* timeout_dev = NULL;
-void stop_transfers(int sig __attribute__((unused))) {
+static ubertooth_t* timeout_dev = NULL;
+static void stop_transfers(int sig __attribute__((unused))) {
 	if (timeout_dev)
 		timeout_dev->stop_ubertooth = 1;
 }
@@ -263,6 +263,9 @@ static void* poll_thread_main(void* arg __attribute__((unused)))
 	return NULL;
 }
 
+/**
+ * @brief Start the libusb event handling thread.
+ */
 int ubertooth_bulk_thread_start()
 {
 	do_exit = 0;
@@ -270,6 +273,9 @@ int ubertooth_bulk_thread_start()
 	return pthread_create(&poll_thread, NULL, poll_thread_main, NULL);
 }
 
+/**
+ * @brief Stop the libusb event handling thread.
+ */
 void ubertooth_bulk_thread_stop()
 {
 	do_exit = 1;
@@ -367,7 +373,14 @@ static int stream_rx_usb(ubertooth_t* ut, rx_callback cb, void* cb_args)
 	return 1;
 }
 
-/* file should be in full USB packet format (ubertooth-dump -f) */
+/**
+ * @brief Read and process Bluetooth basic rate packets from a file
+ * @details File should be in full USB packet format (ubertooth-dump -f)
+ * @param ut Ubertooth structure that processes the packets
+ * @param fp File to read from
+ * @param cb function pointer to callback function
+ * @param cb_args arguments of callback function
+ */
 int stream_rx_file(ubertooth_t* ut, FILE* fp, rx_callback cb, void* cb_args)
 {
 	uint8_t buf[PKT_LEN];
@@ -388,6 +401,14 @@ int stream_rx_file(ubertooth_t* ut, FILE* fp, rx_callback cb, void* cb_args)
 	}
 }
 
+/**
+ * @brief  Detect the AFH channel map of a piconet
+ *
+ * @param  ut       Ubertooth instance
+ * @param  pn       The observed piconet
+ * @param  timeout  Use optimizations for an initial AFH map detection for
+ *                  [timeout] seconds, then monitor AFH map for changes.
+ */
 void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout)
 {
 	int r = btbb_init(max_ac_errors);
@@ -416,6 +437,12 @@ void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout)
 	stream_rx_usb(ut, cb_afh_monitor, pn);
 }
 
+/**
+ * @brief  Monitor the AFH channel map of a piconet and print it every second
+ *
+ * @param  ut       Ubertooth instance
+ * @param  pn       The observed piconet
+ */
 void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unused)))
 {
 	static uint32_t lasttime;
@@ -474,6 +501,12 @@ void rx_btle_file(FILE* fp)
 	stream_rx_file(ut, fp, cb_btle, NULL);
 }
 
+/**
+ * @brief Unpack received data bytes into an array of bits
+ *
+ * @param buf       Byte array input
+ * @param unpacked  Bit array output
+ */
 void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked)
 {
 	int i, j;
@@ -539,6 +572,10 @@ void rx_dump(ubertooth_t* ut, int bitstream)
 		stream_rx_usb(ut, cb_dump_full, NULL);
 }
 
+/**
+ * @brief Destroy an Ubertooth instance and free its memory
+ * @param ut Ubertooth instance
+ */
 void ubertooth_stop(ubertooth_t* ut)
 {
 	/* make sure xfers are not active */
@@ -668,6 +705,12 @@ int ubertooth_get_api(ubertooth_t *ut, uint16_t *version) {
 	return 0;
 }
 
+/**
+ * @brief Check if the firmware version matches the hast library version
+ * @param ut Ubertooth device
+ * @retval 1 firmware and host library versions match
+ * @retval -1 firmware and host library versions do not match
+ */
 int ubertooth_check_api(ubertooth_t *ut) {
 	uint16_t version;
 	int result;

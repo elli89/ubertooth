@@ -68,16 +68,16 @@
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 
 void show_libusb_error(int error_code);
-int ubertooth_cmd_sync(struct libusb_device_handle* devh,
-	                   uint8_t type,
-	                   uint8_t command,
-	                   uint8_t* data,
-	                   uint16_t size);
-int ubertooth_cmd_async(struct libusb_device_handle* devh,
-	                    uint8_t type,
-	                    uint8_t command,
-	                    uint8_t* data,
-	                    uint16_t size);
+// int ubertooth_cmd_sync(struct libusb_device_handle* devh,
+// 	                   uint8_t type,
+// 	                   uint8_t command,
+// 	                   uint8_t* data,
+// 	                   uint16_t size);
+// int ubertooth_cmd_async(struct libusb_device_handle* devh,
+// 	                    uint8_t type,
+// 	                    uint8_t command,
+// 	                    uint8_t* data,
+// 	                    uint16_t size);
 
 void cmd_trim_clock(struct libusb_device_handle* devh, uint16_t offset);
 void cmd_fix_clock_drift(struct libusb_device_handle* devh, int16_t ppm);

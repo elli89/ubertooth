@@ -27,10 +27,14 @@
 
 #include "ubertooth_callback.h"
 
+
+#define RSSI_HISTORY_LEN 10
+#define CLOCK_TRIM_THRESHOLD 2
+
 unsigned int packet_counter_max;
 
 /**
- * @defgroup callback Callback functions
+ * @brief @defgroup callback Callback functions
  * @{
  */
 
@@ -53,8 +57,6 @@ static int8_t cc2400_rssi_to_dbm( const int8_t rssi )
 		return 0;
 	}
 }
-
-#define RSSI_HISTORY_LEN 10
 
 /* Ignore packets with a SNR lower than this in order to reduce
  * processor load.  TODO: this should be a command line parameter. */
@@ -129,7 +131,8 @@ static uint64_t now_ns_from_clk100ns( ubertooth_t* ut, const usb_pkt_rx* rx )
 	       ((100ull*ut->clk100ns_upper)<<32);
 }
 
-/* Sniff for LAPs. If a piconet is provided, use the given LAP to
+/**
+ * @brief Sniff for LAPs. If a piconet is provided, use the given LAP to
  * search for UAP.
  */
 void cb_scan(ubertooth_t* ut, void* args __attribute__((unused)))
@@ -184,6 +187,9 @@ out:
 		btbb_packet_unref(pkt);
 }
 
+/**
+ * @brief Detect the AFH channel map. Perform a fast search for used channels.
+ */
 void cb_afh_initial(ubertooth_t* ut, void* args)
 {
 	btbb_piconet* pn = (btbb_piconet*)args;
@@ -229,6 +235,9 @@ out:
 		btbb_packet_unref(pkt);
 }
 
+/**
+ * @brief Detect and monitor the AFH channel map. Find used and unused channels.
+ */
 void cb_afh_monitor(ubertooth_t* ut, void* args)
 {
 	btbb_piconet* pn = (btbb_piconet*)args;
@@ -274,6 +283,9 @@ out:
 		btbb_packet_unref(pkt);
 }
 
+/**
+ * @brief Detect and monitor the AFH channel map and print it every second.
+ */
 void cb_afh_r(ubertooth_t* ut, void* args)
 {
 	btbb_piconet* pn = (btbb_piconet*)args;
@@ -312,8 +324,8 @@ out:
 }
 
 
-/*
- * Sniff Bluetooth Low Energy packets.
+/**
+ * @brief Sniff Bluetooth Low Energy packets.
  */
 void cb_btle(ubertooth_t* ut, void* args)
 {
@@ -432,8 +444,9 @@ void cb_btle(ubertooth_t* ut, void* args)
 
 	fflush(stdout);
 }
-/*
- * Sniff E-GO packets
+
+/**
+ * @brief Sniff E-GO packets
  */
 void cb_ego(ubertooth_t* ut, void* args __attribute__((unused)))
 {
@@ -460,8 +473,10 @@ void cb_ego(ubertooth_t* ut, void* args __attribute__((unused)))
 	fflush(stdout);
 }
 
-#define CLOCK_TRIM_THRESHOLD 2
-
+/**
+ * @brief Sniff for LAPs. If a piconet is provided, use the given LAP to
+ * search for UAP.
+ */
 void cb_rx(ubertooth_t* ut, void* args)
 {
 	btbb_packet* pkt = NULL;

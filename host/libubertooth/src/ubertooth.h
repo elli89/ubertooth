@@ -42,10 +42,10 @@ typedef enum {
 } board_ids;
 
 typedef struct {
-	fifo_t* fifo;/**< FIFO for received USB packets*/
+	fifo_t* fifo;///< FIFO for received USB packets
 
-	struct libusb_device_handle* devh;/**< USB device handel*/
-	struct libusb_transfer* rx_xfer;/**< USB transfer object*/
+	struct libusb_device_handle* devh;///< USB device handel
+	struct libusb_transfer* rx_xfer;///< USB transfer object
 
 
 	uint8_t stop_ubertooth;
@@ -90,8 +90,8 @@ void ubertooth_bulk_thread_stop();
 int stream_rx_file(ubertooth_t* ut,FILE* fp, rx_callback cb, void* cb_args);
 
 void rx_dump(ubertooth_t* ut, int full);
-void rx_btle(ubertooth_t* ut);
-void rx_btle_file(FILE* fp);
+// void rx_btle(ubertooth_t* ut);
+// void rx_btle_file(FILE* fp); // FIXME This function is decladed but never used. Delete it?
 void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout);
 void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout);
 

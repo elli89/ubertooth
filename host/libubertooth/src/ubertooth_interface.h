@@ -157,17 +157,17 @@ enum usb_pkt_status {
  * USB packet for Bluetooth RX (64 total bytes)
  */
 typedef struct {
-	u8     pkt_type;
-	u8     status;
-	u8     channel;
-	u8     clkn_high;
-	u32    clk100ns;
-	int8_t rssi_max;   ///< Max RSSI seen while collecting symbols in this packet
-	int8_t rssi_min;   ///< Min RSSI seen while collecting symbols in this packet
-	int8_t rssi_avg;   ///< Average RSSI seen while collecting symbols in this packet
-	u8     rssi_count;   ///< Number of ... (0 means RSSI stats are invalid)
-	u8     reserved[2];
-	u8     data[DMA_SIZE];
+	u8       pkt_type;       ///< Packet type
+	u8       status;         ///< Status bits of this packet
+	u8       channel;        ///< Channel of this packet
+	u8       clkn_high;      ///< Bits [27..20] of the CLKN timestamp of this packet
+	u32      clk100ns;       ///< Timestamp of the last captured bit of this packet in units of 100ns
+	int8_t   rssi_max;       ///< Max RSSI seen while collecting symbols in this packet
+	int8_t   rssi_min;       ///< Min RSSI seen while collecting symbols in this packet
+	int8_t   rssi_avg;       ///< Average RSSI seen while collecting symbols in this packet
+	u8       rssi_count;     ///< Number of RSSI seen while collecting symbols in this packet (0 means RSSI stats are invalid)
+	u8       reserved[2];
+	u8       data[DMA_SIZE]; ///< Demodulated data (50 total bytes)
 } usb_pkt_rx;
 
 typedef struct {
