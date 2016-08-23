@@ -779,6 +779,24 @@ static void msleep(uint32_t millis)
 	}
 }
 
+/*
+ * Sleep (busy wait) for 'millis' milliseconds.
+ * Needs clkn. Be sure to call clkn_init() before using it.
+ */
+static void usleep(uint32_t micros)
+{
+	uint32_t now = CLK100NS;
+	uint32_t stop_at = now + micros * 10; // micros -> CLK100NS ticks
+
+	// handle CLK100NS overflow
+	if (stop_at >= ((uint32_t)1<<20)*3125) {
+		stop_at -= ((uint32_t)1<<20)*3125;
+		while (CLK100NS >= now || CLK100NS < stop_at);
+	} else {
+		while (CLK100NS < stop_at);
+	}
+}
+
 void DMA_IRQHandler()
 {
 	if ( mode == MODE_RX_SYMBOLS
@@ -889,7 +907,7 @@ static void cc2400_rx()
 		//      |  | |   +-----------> sync word: 8 MSB bits of SYNC_WORD
 		//      |  | +---------------> 2 preamble bytes of 01010101
 		//      |  +-----------------> not packet mode
-			//      +--------------------> un-buffered mode
+		//      +--------------------> un-buffered mode
 		cc2400_set(FSDIV,   channel - 1); // 1 MHz IF
 		cc2400_set(MDMCTRL, mdmctrl);
 	}
@@ -1685,7 +1703,7 @@ void bt_le_sync(u8 active_mode)
 		/////////////////////
 		// process the packet
 
-		uint32_t packet[48/4+1] = { 0, };
+		uint32_t packet[48/4+1];
 		u8 *p = (u8 *)packet;
 		packet[0] = le.access_address;
 
@@ -2330,8 +2348,8 @@ void rx_generic_sync(void) {
 	while (!(cc2400_status() & FS_LOCK));
 	RXLED_SET;
 #ifdef UBERTOOTH_ONE
-		PAEN_SET;
-		HGM_SET;
+	PAEN_SET;
+	HGM_SET;
 #endif
 	while (1) {
 		while ((cc2400_get(FSMSTATE) & 0x1f) != STATE_STROBE_FS_ON);
@@ -2379,7 +2397,7 @@ void tx_generic(void) {
 	while (!(cc2400_status() & FS_LOCK));
 	TXLED_SET;
 #ifdef UBERTOOTH_ONE
-		PAEN_SET;
+	PAEN_SET;
 #endif
 	while ((cc2400_get(FSMSTATE) & 0x1f) != STATE_STROBE_FS_ON);
 
@@ -2405,9 +2423,9 @@ void tx_generic(void) {
 /* spectrum analysis */
 void specan()
 {
-	u16 f;
-	u8 i = 0;
-	u8 buf[DMA_SIZE];
+	uint16_t f;
+	uint8_t i = 0;
+	uint8_t buf[DMA_SIZE];
 
 	RXLED_SET;
 
@@ -2419,22 +2437,24 @@ void specan()
 	//HGM_SET;
 #endif
 	cc2400_set(LMTST,   0x2b22);
-	cc2400_set(MDMTST0, 0x134b); // without PRNG
-	cc2400_set(GRMDM,   0x0101); // un-buffered mode, GFSK
-	cc2400_set(MDMCTRL, 0x0029); // 160 kHz frequency deviation
-	//FIXME maybe set RSSI.RSSI_FILT
+	cc2400_set(MDMTST0, 0x134b);                     // without PRNG
+	cc2400_set(GRMDM,   0x0101);                     // un-buffered mode, GFSK
+	cc2400_set(MDMCTRL, 0x0029);                     // 160 kHz frequency deviation
+	cc2400_set(RSSI,    0x00F0 | RSSI_FILTER_8_BIT); // RSSI Sample over 8 symbols
+
 	while (!(cc2400_status() & XOSC16M_STABLE));
 	while ((cc2400_status() & FS_LOCK));
 
 	while (requested_mode == MODE_SPECAN) {
-		for (f = low_freq; f < high_freq + 1; f++) {
+		for (f = low_freq; f <= high_freq; f++) {
 			cc2400_set(FSDIV, f - 1);
 			cc2400_strobe(SFSON);
 			while (!(cc2400_status() & FS_LOCK));
 			cc2400_strobe(SRX);
 
 			/* give the CC2400 time to acquire RSSI reading */
-			volatile u32 j = 500; while (--j); //FIXME crude delay
+			usleep(30); // 20 µs settling time + 8 Bit + 2 µs extra time
+
 			buf[3 * i] = (f >> 8) & 0xFF;
 			buf[(3 * i) + 1] = f  & 0xFF;
 			buf[(3 * i) + 2] = cc2400_get(RSSI) >> 8;
@@ -2457,20 +2477,20 @@ void specan()
 void led_specan()
 {
 	int8_t lvl;
-	u8 i = 0;
-	u16 channels[3] = {2412, 2437, 2462};
-	//void (*set[3]) = {TXLED_SET, RXLED_SET, USRLED_SET};
-	//void (*clr[3]) = {TXLED_CLR, RXLED_CLR, USRLED_CLR};
+	uint8_t i = 0;
+	static const uint16_t channels[3] = {2412, 2437, 2462};
+
+	clkn_start();
 
 #ifdef UBERTOOTH_ONE
 	PAEN_SET;
 	//HGM_SET;
 #endif
 	cc2400_set(LMTST,   0x2b22);
-	cc2400_set(MDMTST0, 0x134b); // without PRNG
-	cc2400_set(GRMDM,   0x0101); // un-buffered mode, GFSK
-	cc2400_set(MDMCTRL, 0x0029); // 160 kHz frequency deviation
-	cc2400_set(RSSI,    0x00F1); // RSSI Sample over 2 symbols
+	cc2400_set(MDMTST0, 0x134b);                     // without PRNG
+	cc2400_set(GRMDM,   0x0101);                     // un-buffered mode, GFSK
+	cc2400_set(MDMCTRL, 0x0029);                     // 160 kHz frequency deviation
+	cc2400_set(RSSI,    0x00F0 | RSSI_FILTER_8_BIT); // RSSI Sample over 8 symbols
 
 	while (!(cc2400_status() & XOSC16M_STABLE));
 	while ((cc2400_status() & FS_LOCK));
@@ -2482,7 +2502,8 @@ void led_specan()
 		cc2400_strobe(SRX);
 
 		/* give the CC2400 time to acquire RSSI reading */
-		volatile u32 j = 500; while (--j); //FIXME crude delay
+		usleep(30); // 20 µs settling time + 8 Bit + 2 µs extra time
+
 		lvl = (int8_t)((cc2400_get(RSSI) >> 8) & 0xff);
 		if (lvl > rssi_threshold) {
 			switch (i) {

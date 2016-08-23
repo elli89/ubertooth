@@ -23,13 +23,6 @@
 #include "ubertooth.h"
 #include "ubertooth_rssi.h"
 
-typedef enum {
-	CS_SAMPLES_1 = 1,
-	CS_SAMPLES_2 = 2,
-	CS_SAMPLES_4 = 3,
-	CS_SAMPLES_8 = 4,
-} cs_samples_t;
-
 #define CS_THRESHOLD_DEFAULT (int8_t)(-120)
 
 
@@ -37,11 +30,14 @@ typedef enum {
  * global. CC2400 RSSI is determined by 54dBm + level. CS threshold is
  * in 4dBm steps, so the provided level is rounded to the nearest
  * multiple of 4 by adding 56. Useful range is -100 to -20. */
-static void cs_threshold_set(int8_t level, cs_samples_t samples)
+static void cs_threshold_set(int8_t level)
 {
 	level = level < -120 ? -120 : level;
 	level = level > -20 ? -20 : level;
-	cc2400_set(RSSI, (uint8_t)((level + 56) & (0x3f << 2)) | ((uint8_t)samples&3));
+
+	uint8_t samples = cc2400_get(RSSI) & 0x03;
+
+	cc2400_set(RSSI, (uint8_t)((level + 56) & (0x3f << 2)) | (samples & 0x03));
 	cs_threshold_cur = level;
 	cs_no_squelch = (level <= -120);
 }
@@ -60,7 +56,7 @@ void cs_threshold_calc_and_set(uint16_t channel)
 	} else {
 		level = cs_threshold_req;
 	}
-	cs_threshold_set(level, CS_SAMPLES_4);
+	cs_threshold_set(level);
 }
 
 /* CS comes from CC2400 GIO6, which is LPC P2.2, active low. GPIO

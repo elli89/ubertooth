@@ -24,6 +24,13 @@
 
 #include "inttypes.h"
 
+typedef enum {
+	RSSI_FILTER_0_BIT = 0,
+	RSSI_FILTER_1_BIT = 1,
+	RSSI_FILTER_4_BIT = 2,
+	RSSI_FILTER_8_BIT = 3,
+} rssi_filter_t;
+
 int8_t rssi_max;
 int8_t rssi_min;
 uint8_t rssi_count;
