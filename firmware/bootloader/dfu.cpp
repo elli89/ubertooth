@@ -23,13 +23,6 @@
 
 #include <string.h>
 
-struct memory_policy {
-	static bool write_permitted(const uint32_t flash_address) {
-		// Protect flash region containing bootloader.
-		return (flash_address >= 0x4000);
-	}
-};
-
 DFU::DFU(Flash& flash) :
 	flash(flash),
 	status(OK),
@@ -110,7 +103,10 @@ uint32_t DFU::get_poll_timeout() const {
 	return 20;  // milliseconds
 }
 
-bool DFU::request_detach(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData) {
+bool DFU::request_detach(TSetupPacket* pSetup,
+                         uint32_t* piLen __attribute__((unused)),
+                         uint8_t* pbData __attribute__((unused)))
+{
 	if( (pSetup->wLength == 0) && (pSetup->wValue <= detach_timeout_ms) ) {
 		// TODO: Check DFU vs. APP mode, and reboot device if in DFU mode?
 		set_state(APPDETACH);
@@ -120,7 +116,10 @@ bool DFU::request_detach(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData)
 	}
 }
 
-bool DFU::request_dnload(TSetupPacket *pSetup, uint32_t *piLen, uint8_t *pbData) {
+bool DFU::request_dnload(TSetupPacket* pSetup,
+                         uint32_t* piLen __attribute__((unused)),
+                         uint8_t* pbData)
+{
 	if( pSetup->wLength == 0 ) {
 		if( get_state() != DFUDNLOAD_IDLE ) {
 			return error(ERRSTALLEDPKT);
@@ -130,53 +129,66 @@ bool DFU::request_dnload(TSetupPacket *pSetup, uint32_t *piLen, uint8_t *pbData)
 		set_state(DFUMANIFEST_SYNC);
 
 		return true;
-	} else if( pSetup->wLength == transfer_size ) {
+	} else {
 		if( (get_state() != DFUIDLE) && (get_state() != DFUDNLOAD_IDLE) ) {
 			return error(ERRSTALLEDPKT);
 		}
 
 		// TODO: Improve returned error values.
 		const uint32_t length = pSetup->wLength;
-		const uint32_t flash_address = pSetup->wValue * transfer_size;
+		const uint32_t flash_address = pSetup->wValue * transfer_size + 0x4000;
 		const uint32_t source_address = reinterpret_cast<uint32_t>(pbData);
-		if( memory_policy::write_permitted(flash_address) ) {
-			if( flash.write(flash_address, source_address, length) ) {
-				set_state(DFUDNLOAD_SYNC);
-			} else {
-				return error(ERRPROG);
-			}
-			return true;
+		if( flash.write(flash_address, source_address, length) ) {
+			set_state(DFUDNLOAD_SYNC);
 		} else {
-			return error(ERRWRITE);
+			return error(ERRPROG);
 		}
-	} else {
-		return error(ERRUNKNOWN);
+		return true;
 	}
 }
 
-bool DFU::request_upload(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData) {
+bool DFU::request_upload(TSetupPacket* pSetup,
+                         uint32_t* piLen,
+                         uint8_t* pbData)
+{
 	if( pSetup->wLength == transfer_size ) {
 		if( (get_state() != DFUIDLE) && (get_state() != DFUUPLOAD_IDLE) ) {
 			return error(ERRSTALLEDPKT);
 		}
 
 		const uint32_t length = pSetup->wLength;
-		const uint32_t flash_address_start = pSetup->wValue * transfer_size;
+		const uint32_t flash_address_start = pSetup->wValue * transfer_size + 0x4000;
 		const uint32_t flash_address_end = flash_address_start + length;
-		if( flash.valid_address(flash_address_start) && flash.valid_address(flash_address_end - 1) ) {
-			memcpy(pbData, reinterpret_cast<const void*>(flash_address_start), length);
-			*piLen = length;
+
+		if( !flash.valid_address(flash_address_start)) {
+			*piLen = 0;
 			set_state(DFUIDLE);
 			return true;
-		} else {
-			return error(ERRADDRESS);
+		}
+		else if( !flash.valid_address(flash_address_end - 1) ) {
+			memcpy(pbData, reinterpret_cast<const void*>(flash_address_start), 0x3ffff-flash_address_start);
+			*piLen = 0x3ffff-flash_address_start;
+			set_state(DFUIDLE);
+			return true;
+		}
+		else{
+			memcpy(pbData, reinterpret_cast<const void*>(flash_address_start), length);
+			*piLen = length;
+			set_state(DFUUPLOAD_IDLE);
+			return true;
 		}
 	} else {
-		return error(ERRUNKNOWN);
+		*piLen = 0;
+		set_state(DFUIDLE);
+		return true;
+		// return error(ERRUNKNOWN);
 	}
 }
 
-bool DFU::request_getstatus(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData) {
+bool DFU::request_getstatus(TSetupPacket* pSetup,
+                            uint32_t* piLen,
+                            uint8_t* pbData)
+{
 	if( (pSetup->wValue == 0) && (pSetup->wLength == 6) ) {
 		switch( get_state() ) {
 			case DFUDNLOAD_SYNC:
@@ -204,7 +216,10 @@ bool DFU::request_getstatus(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbDa
 	}
 }
 
-bool DFU::request_clrstatus(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData) {
+bool DFU::request_clrstatus(TSetupPacket* pSetup,
+                            uint32_t* piLen __attribute__((unused)),
+                            uint8_t* pbData __attribute__((unused)))
+{
 	if( (pSetup->wValue == 0) && (pSetup->wLength == 0) ) {
 		if( get_state() == DFUERROR ) {
 			set_status(OK);
@@ -218,7 +233,10 @@ bool DFU::request_clrstatus(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbDa
 	}
 }
 
-bool DFU::request_getstate(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData) {
+bool DFU::request_getstate(TSetupPacket* pSetup,
+                           uint32_t* piLen,
+                           uint8_t* pbData)
+{
 	if( (pSetup->wValue == 0) && (pSetup->wLength == 1) ) {
 		pbData[0] = get_state();
 		*piLen = 1;
@@ -228,7 +246,10 @@ bool DFU::request_getstate(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbDat
 	}
 }
 
-bool DFU::request_abort(TSetupPacket *pSetup, uint32_t *piLen, uint8_t* pbData) {
+bool DFU::request_abort(TSetupPacket* pSetup,
+                        uint32_t* piLen __attribute__((unused)),
+                        uint8_t* pbData __attribute__((unused)))
+{
 	if( (pSetup->wValue == 0) && (pSetup->wLength == 0) ) {
 		if( get_state() != DFUERROR ) {
 			set_state(DFUIDLE);

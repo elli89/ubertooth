@@ -50,7 +50,7 @@ public:
 	}
 
 	bool valid_address(const uint32_t address) const {
-		return (address < 0x80000);
+		return (address < 0x3ffff);
 	}
 
 private:

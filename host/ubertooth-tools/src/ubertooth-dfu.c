@@ -66,7 +66,8 @@ static int check_suffix(FILE* signedfile, DFU_suffix* suffix) {
 	// Suffix bytes are reversed
 	if(!((suffix->ucDfuSig[0]==0x55) &&
 	     (suffix->ucDfuSig[1]==0x46) &&
-	     (suffix->ucDfuSig[2]==0x44))) {
+	     (suffix->ucDfuSig[2]==0x44)))
+	{
 		fprintf(stderr, "DFU Signature mismatch: not a DFU file\n");
 		return 1;
 	}
@@ -271,16 +272,9 @@ int detach(libusb_device_handle* devh) {
 }
 
 int upload(libusb_device_handle* devh, FILE* upfile) {
-	int address, length, block, rv;
+	int length, block, rv;
 	uint8_t buffer[BLOCK_SIZE];
-	address = BOOTLOADER_OFFSET + BOOTLOADER_SIZE;
-	length = (256 * 1024) - address;
-	block = address / BLOCK_SIZE;
-
-	if ((address & (BLOCK_SIZE - 1)) != 0) {
-		fprintf(stderr, "Upload failed: must start at block boundary\n");
-		return -1;
-	}
+	block = 0;
 
 	rv = enter_dfu_mode(devh);
 	if(rv < 0) {
@@ -288,10 +282,11 @@ int upload(libusb_device_handle* devh, FILE* upfile) {
 		return rv;
 	}
 
-	while(length > 0) {
+	while(1) {
 		rv = libusb_control_transfer(devh, DFU_IN, REQ_UPLOAD, block, 0,
 		                             buffer, BLOCK_SIZE, 1000);
 		if (rv < 0) {
+			fprintf(stdout, "\nBlock %d start %x end %x\n", block, block*BLOCK_SIZE+0x4000, (block+1)*BLOCK_SIZE+0x4000-1);
 			if (rv == LIBUSB_ERROR_PIPE)
 				fprintf(stderr, "control message unsupported\n");
 			else {
@@ -303,14 +298,13 @@ int upload(libusb_device_handle* devh, FILE* upfile) {
 		if(rv == BLOCK_SIZE)
 			fwrite(buffer, 1, BLOCK_SIZE, upfile);
 		else {
-			fprintf(stdout, "\n");
-			fprintf(stderr, "Upload failed: did not read full block\n");
-			return -1;
+			fwrite(buffer, 1, rv, upfile);
+			break;
 		}
 		block++;
 		length -= rv;
 	}
-	fprintf(stdout, "\n");
+	fprintf(stdout, "\nblock %d start %x end %x\n", block, block*BLOCK_SIZE+0x4000, (block+1)*BLOCK_SIZE+0x4000-1);
 	return 0;
 }
 
@@ -330,16 +324,10 @@ int dfu_get_status(libusb_device_handle* devh) {
 }
 
 int download(libusb_device_handle* devh, FILE* downfile) {
-	int address, length, block, rv, block_count=1;
+	int length, block, rv;
 	uint8_t buffer[BLOCK_SIZE];
-	address = BOOTLOADER_OFFSET + BOOTLOADER_SIZE;
-	block = address / BLOCK_SIZE;
+	block = 0;
 	fseek(downfile, 0, SEEK_SET);
-
-	if ((address & (SECTOR_SIZE - 1)) != 0) {
-		fprintf(stderr, "Download failed: must start at sector boundary\n");
-		return -1;
-	}
 
 	rv = enter_dfu_mode(devh);
 	if(rv < 0) {
@@ -360,15 +348,11 @@ int download(libusb_device_handle* devh, FILE* downfile) {
 			}
 		}
 		dfu_get_status(devh);
-		fprintf(stdout, ".");
-		if(block_count % 40)
-			fflush(stdout);
-		else
-			fprintf(stdout, "\n");
+		printf(".");
+
 		block++;
-		block_count++;
 	}
-	fprintf(stdout, "\n");
+	printf("\n");
 	return 0;
 }
 
@@ -476,7 +460,7 @@ int main(int argc, char **argv) {
 		fclose(outfile);
 	}
 
-	if(functions & (FUNC_UPLOAD|FUNC_DOWNLOAD|FUNC_RESET)) {
+	if(!(functions & FUNC_SIGN)) {
 		// Find Ubertooth and switch it to DFU mode
 		int rv, count= 0;
 		devh = find_ubertooth_dfu_device();

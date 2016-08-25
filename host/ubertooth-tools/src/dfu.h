@@ -1,19 +1,19 @@
 /* -*- c -*- */
 /*
  * Copyright 2015 Dominic Spill
- * 
+ *
  * This file is part of Project Ubertooth
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with libbtbb; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -118,5 +118,5 @@ static const uint32_t crc_table[] = {
 
 #define BOOTLOADER_OFFSET 0x0
 #define BOOTLOADER_SIZE 0x4000
-#define BLOCK_SIZE (1<<8)
+#define BLOCK_SIZE 0x100
 #define SECTOR_SIZE (1<<12)
