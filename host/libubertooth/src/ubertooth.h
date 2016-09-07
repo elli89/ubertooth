@@ -95,6 +95,6 @@ void rx_btle_file(FILE* fp);
 void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout);
 void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout);
 
-void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked);
+void ubertooth_unpack_symbols(const uint8_t* buf, bool* unpacked);
 
 #endif /* __UBERTOOTH_H__ */

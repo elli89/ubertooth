@@ -424,7 +424,7 @@ void rx_btle_file(FILE* fp)
 	stream_rx_file(ut, fp, cb_btle, NULL);
 }
 
-void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked)
+void ubertooth_unpack_symbols(const uint8_t* buf, bool* unpacked)
 {
 	int i, j;
 
@@ -444,7 +444,7 @@ static void cb_dump_bitstream(ubertooth_t* ut, void* args __attribute__((unused)
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
 	char bitstream[BANK_LEN];
-	ubertooth_unpack_symbols((uint8_t*)rx->data, bitstream);
+	ubertooth_unpack_symbols((uint8_t*)rx->data, (bool*)bitstream);
 
 	// convert to ascii
 	for (i = 0; i < BANK_LEN; ++i)

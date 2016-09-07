@@ -125,7 +125,7 @@ static void cb_cap(ubertooth_t* ut, void* args)
 	btbb_packet* pkt = NULL;
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
@@ -295,13 +295,13 @@ void PacketSource_Ubertooth::build_pcap_payload(uint8_t* data, btbb_packet* pkt)
 
 	/* packet header modified to fit byte boundaries */
 	/* lt_addr and type */
-	data[20] = (char) (btbb_packet_get_type(pkt) << 3) | btbb_packet_get_lt_addr(pkt);
+	data[20] = (btbb_packet_get_type(pkt) << 3) | btbb_packet_get_lt_addr(pkt);
 	/* flags */
-	data[21] = (char) btbb_packet_get_header_flags(pkt);
+	data[21] = btbb_packet_get_header_flags(pkt);
 	/* HEC */
-	data[22] = (char) btbb_packet_get_hec(pkt);
+	data[22] = btbb_packet_get_hec(pkt);
 
-	btbb_get_payload_packed(pkt, (char *) &data[23]);
+	btbb_get_payload_packed(pkt, &data[23]);
 
 }
 

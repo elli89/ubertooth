@@ -138,7 +138,7 @@ void cb_scan(ubertooth_t* ut, void* args __attribute__((unused)))
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 	/* Sanity check */
@@ -187,7 +187,7 @@ void cb_afh_initial(ubertooth_t* ut, void* args)
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 
@@ -233,7 +233,7 @@ void cb_afh_monitor(ubertooth_t* ut, void* args)
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 	static unsigned long last_seen[79] = {0};
@@ -278,7 +278,7 @@ void cb_afh_r(ubertooth_t* ut, void* args)
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 	static unsigned long last_seen[79] = {0};
@@ -461,7 +461,7 @@ void cb_rx(ubertooth_t* ut, void* args)
 {
 	btbb_packet* pkt = NULL;
 	btbb_piconet* pn = (btbb_piconet *)args;
-	char syms[BANK_LEN*10] = {0};
+	bool syms[BANK_LEN*10] = {0};
 	int offset;
 	uint16_t clk_offset;
 	uint32_t clkn;

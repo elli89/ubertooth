@@ -43,7 +43,7 @@ const char compile_info[] =
 
 /* hopping stuff */
 volatile uint8_t  hop_mode = HOP_NONE;
-volatile uint8_t  do_hop = 0;                  // set by timer interrupt
+volatile bool     do_hop = false;                  // set by timer interrupt
 volatile uint16_t channel = 2441;
 volatile uint16_t hop_direct_channel = 0;      // for hopping directly to a channel
 volatile uint16_t hop_timeout = 158;
@@ -54,7 +54,7 @@ volatile uint16_t le_adv_channel = 2402;
 volatile uint8_t  idle_buf_clkn_high = 0;
 volatile uint32_t idle_buf_clk100ns = 0;
 volatile uint16_t idle_buf_channel = 0;
-volatile uint8_t  dma_discard = 0;
+volatile bool     dma_discard = false;
 volatile uint8_t  status = 0;
 
 /* operation mode */

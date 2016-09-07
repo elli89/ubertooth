@@ -23,6 +23,7 @@
 #define __UBERTOOTH_INTERFACE_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // increment on every API change
 #define UBERTOOTH_API_VERSION 0x0102

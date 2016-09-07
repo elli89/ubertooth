@@ -21,12 +21,32 @@
 
 #include "bluetooth.h"
 
+/* index into whitening data array */
+static const uint8_t INDICES[] = {99, 85, 17, 50, 102, 58, 108, 45, 92, 62, 32, 118, 88, 11, 80, 2, 37, 69, 55, 8, 20, 40, 74, 114, 15, 106, 30, 78, 53, 72, 28, 26, 68, 7, 39, 113, 105, 77, 71, 25, 84, 49, 57, 44, 61, 117, 10, 1, 123, 124, 22, 125, 111, 23, 42, 126, 6, 112, 76, 24, 48, 43, 116, 0};
+
+static const bool WHITENING_DATA[] = {1, 1, 1, 0, 0, 0, 1, 1,
+                                      1, 0, 1, 1, 0, 0, 0, 1,
+                                      0, 1, 0, 0, 1, 0, 1, 1,
+                                      1, 1, 1, 0, 1, 0, 1, 0,
+                                      1, 0, 0, 0, 0, 1, 0, 1,
+                                      1, 0, 1, 1, 1, 1, 0, 0,
+                                      1, 1, 1, 0, 0, 1, 0, 1,
+                                      0, 1, 1, 0, 0, 1, 1, 0,
+                                      0, 0, 0, 0, 1, 1, 0, 1,
+                                      1, 0, 1, 0, 1, 1, 1, 0,
+                                      1, 0, 0, 0, 1, 1, 0, 0,
+                                      1, 0, 0, 0, 1, 0, 0, 0,
+                                      0, 0, 0, 1, 0, 0, 1, 0,
+                                      0, 1, 1, 0, 1, 0, 0, 1,
+                                      1, 1, 1, 0, 1, 1, 1, 0,
+                                      0, 0, 0, 1, 1, 1, 1};
+
 /* these values for hop() can be precalculated (at leastin part) */
-u8 a1, b, c1, e;
-u16 d1;
+uint8_t  a1, b, c1, e;
+uint16_t d1;
 /* frequency register bank */
-u8 bank[NUM_BREDR_CHANNELS];
-u8 afh_bank[NUM_BREDR_CHANNELS];
+uint8_t bank[NUM_BREDR_CHANNELS];
+uint8_t afh_bank[NUM_BREDR_CHANNELS];
 
 /* count the number of 1 bits in a uint64_t */
 static uint8_t count_bits(uint64_t n)
@@ -40,8 +60,8 @@ static uint8_t count_bits(uint64_t n)
 /* do all of the one time precalculation */
 void precalc(void)
 {
-	u8 i, j, chan;
-	u32 address;
+	uint8_t i, j, chan;
+	uint32_t address;
 	address = target.address & 0xffffffff;
 	syncword = 0;
 
@@ -82,7 +102,7 @@ void precalc(void)
 }
 
 /* 5 bit permutation */
-static u8 perm5(u8 z, u8 p_high, u16 p_low)
+static uint8_t perm5(uint8_t z, uint8_t p_high, uint16_t p_low)
 {
 	/* z is constrained to 5 bits, p_high to 5 bits, p_low to 9 bits */
 	z &= 0x1f;
@@ -90,9 +110,9 @@ static u8 perm5(u8 z, u8 p_high, u16 p_low)
 	p_low &= 0x1ff;
 
 	int i;
-	u8 tmp, output, z_bit[5], p[14];
-	static const u8 index1[] = {0, 2, 1, 3, 0, 1, 0, 3, 1, 0, 2, 1, 0, 1};
-	static const u8 index2[] = {1, 3, 2, 4, 4, 3, 2, 4, 4, 3, 4, 3, 3, 2};
+	uint8_t tmp, output, z_bit[5], p[14];
+	static const uint8_t index1[] = {0, 2, 1, 3, 0, 1, 0, 3, 1, 0, 2, 1, 0, 1};
+	static const uint8_t index2[] = {1, 3, 2, 4, 4, 3, 2, 4, 4, 3, 4, 3, 3, 2};
 
 	/* bits of p_low and p_high are control signals */
 	for (i = 0; i < 9; i++)
@@ -122,11 +142,11 @@ static u8 perm5(u8 z, u8 p_high, u16 p_low)
 	return output;
 }
 
-u16 next_hop(u32 clock)
+uint16_t next_hop(uint32_t clock)
 {
-	u8 a, c, x, y1, perm, next_channel;
-	u16 d, y2;
-	u32 base_f, f, f_dash;
+	uint8_t a, c, x, y1, perm, next_channel;
+	uint16_t d, y2;
+	uint32_t base_f, f, f_dash;
 
 	clock &= 0xffffffff;
 	/* Variable names used in Vol 2, Part B, Section 2.6 of the spec */
@@ -155,10 +175,10 @@ u16 next_hop(u32 clock)
 
 }
 
-int find_access_code(u8 *idle_rxbuf)
+int find_access_code(uint8_t* idle_rxbuf)
 {
 	/* Looks for an AC in the stream */
-	u8 bit_errors, curr_buf;
+	uint8_t bit_errors, curr_buf;
 	int i = 0, count = 0;
 
 	if (syncword == 0) {
