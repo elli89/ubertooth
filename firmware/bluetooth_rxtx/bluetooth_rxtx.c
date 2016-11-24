@@ -119,9 +119,6 @@ data_cb_t data_cb = NULL;
 typedef void (*packet_cb_t)(u8 *);
 packet_cb_t packet_cb = NULL;
 
-/* Unpacked symbol buffers (two rxbufs) */
-char unpacked[DMA_SIZE*8*2];
-
 static int enqueue(uint8_t type, uint8_t* buf)
 {
 	usb_pkt_rx* f = usb_enqueue();
@@ -1488,6 +1485,9 @@ void reset_le_promisc(void) {
 /* generic le mode */
 void bt_generic_le(u8 active_mode)
 {
+	/* Unpacked symbol buffers (two rxbufs) */
+	bool unpacked[DMA_SIZE*8*2];
+
 	u8 hold;
 	int i, j;
 	int8_t rssi, rssi_at_trigger;
@@ -1835,7 +1835,7 @@ cleanup:
 
 /* low energy connection following
  * follows a known AA around */
-int cb_follow_le() {
+int cb_follow_le(bool* unpacked) {
 	int i, j, k;
 	int idx = whitening_index[btle_channel_index(channel-2402)];
 
@@ -2143,12 +2143,12 @@ void see_aa(u32 aa) {
 }
 
 /* le promiscuous mode */
-int cb_le_promisc(char *unpacked) {
+int cb_le_promisc(bool* unpacked) {
 	int i, j, k;
 	int idx;
 
 	// empty data PDU: 01 00
-	char desired[4][16] = {
+	bool desired[4][16] = {
 		{ 1, 0, 0, 0, 0, 0, 0, 0,
 		  0, 0, 0, 0, 0, 0, 0, 0, },
 		{ 1, 0, 0, 1, 0, 0, 0, 0,
