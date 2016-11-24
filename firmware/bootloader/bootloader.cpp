@@ -174,7 +174,7 @@ static uint32_t count = 0;
 static bool use_timeout = false;
 
 BOOL dfu_request_handler(TSetupPacket *pSetup, int *piLen, u8 **ppbData) {
-    return dfu.request_handler(pSetup, reinterpret_cast<uint32_t*>(piLen), ppbData) ? TRUE : FALSE;
+	return dfu.request_handler(pSetup, reinterpret_cast<uint32_t*>(piLen), ppbData) ? TRUE : FALSE;
 }
 
 int bootloader_usb_init()
@@ -198,19 +198,19 @@ int bootloader_usb_init()
 }
 
 void bootloader_usb_close() {
-    USBHwConnect(FALSE);
+	USBHwConnect(FALSE);
 }
 
 void leds_on() {
-		TXLED_SET;
-		RXLED_SET;
-		USRLED_SET;
+	TXLED_SET;
+	RXLED_SET;
+	USRLED_SET;
 }
 
 void leds_off() {
-		TXLED_CLR;
-		RXLED_CLR;
-		USRLED_CLR;
+	TXLED_CLR;
+	RXLED_CLR;
+	USRLED_CLR;
 }
 
 /* chasing pattern indicates bootloader activity */
@@ -270,12 +270,12 @@ static void run_bootloader()
 static void run_application() {
 
 // disable interrupts, or perhaps do it on entry to the bootloader, since we're not using interrupts?
-    asm(
-        "movw    r3, #16384\n\t"
-        "movt    r3, #0\n\t"
-        "ldr     sp, [r3, #0]\n\t"  // initial stack pointer
-        "ldr     pc, [r3, #4]\n\t"  // initial program counter
-    );
+	asm(
+		"movw    r3, #16384\n\t"
+		"movt    r3, #0\n\t"
+		"ldr     sp, [r3, #0]\n\t"  // initial stack pointer
+		"ldr     pc, [r3, #4]\n\t"  // initial program counter
+	);
 }
 
 int main(void)
