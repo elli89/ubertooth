@@ -23,35 +23,16 @@
 #define __UBERTOOTH_H__
 
 #include "ubertooth_control.h"
-#include "ubertooth_bulk.h"
 #include "packetsource.h"
 #include <btbb.h>
-
-/* specan output types
- * see https://github.com/dkogan/feedgnuplot for plotter */
-enum class specan_modes {
-	SPECAN_STDOUT         = 0,
-	SPECAN_GNUPLOT_NORMAL = 1,
-	SPECAN_GNUPLOT_3D     = 2,
-	SPECAN_FILE           = 3
-};
-
-enum class board_ids {
-	BOARD_ID_UBERTOOTH_ZERO = 0,
-	BOARD_ID_UBERTOOTH_ONE  = 1,
-	BOARD_ID_TC13BADGE      = 2
-};
 
 class Ubertooth
 {
 private:
 	Packetsource* source;
 
-	Bulk* bulk;
-
 	struct libusb_device_handle* devh;
 
-	uint8_t stop_ubertooth;
 	uint64_t abs_start_ns;
 	uint32_t start_clk100ns;
 	uint64_t last_clk100ns;
@@ -68,33 +49,10 @@ public:
 
 	~Ubertooth();
 
-	void register_cleanup_handler(int do_exit);
-
 	int connect(int ubertooth_device);
+	void start();
 	void stop();
-	int get_api(uint16_t* version);
-	int check_api();
-	void set_timeout(int seconds);
-
-	int stream_rx_file(FILE* fp, rx_callback cb, void* cb_args);
-
-	void rx_dump(int full);
-	void rx_btle();
-	void rx_btle_file(FILE* fp);
-	void rx_afh(btbb_piconet* pn, int timeout);
-	void rx_afh_r(btbb_piconet* pn, int timeout);
-
-	void print_version();
-	void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked);
+	usb_pkt_rx receive();
 };
-
-typedef struct {
-	unsigned allowed_access_address_errors;
-} btle_options;
-
-extern uint32_t systime;
-extern FILE* infile;
-extern FILE* dumpfile;
-extern int max_ac_errors;
 
 #endif /* __UBERTOOTH_H__ */

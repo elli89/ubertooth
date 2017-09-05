@@ -36,4 +36,8 @@ void cb_ego(Ubertooth* ut, void* args __attribute__((unused)));
 void cb_rx(Ubertooth* ut, void* args);
 void cb_scan(Ubertooth* ut, void* args);
 
+typedef struct {
+	unsigned allowed_access_address_errors;
+} btle_options;
+
 #endif /* __UBERTOOTH_CALLBACK_H__ */

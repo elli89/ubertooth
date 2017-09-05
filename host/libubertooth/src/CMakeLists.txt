@@ -24,14 +24,15 @@ message(STATUS "Setting version string ${RELEASE_STRING}")
 
 # Targets
 set(cpp_sources ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth.cpp
-              ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_callback.c
-              ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_control.c
-              ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_bulk.cpp
+            #   ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_callback.c
+              ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_control.cpp
+              ${CMAKE_CURRENT_SOURCE_DIR}/packetsource_ubertooth.cpp
           CACHE INTERNAL "List of CPP sources")
 set(cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth.h
-              ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_callback.h
+            #   ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_callback.h
               ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_control.h
-              ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_bulk.h
+              ${CMAKE_CURRENT_SOURCE_DIR}/packetsource.h
+              ${CMAKE_CURRENT_SOURCE_DIR}/packetsource_ubertooth.h
 			  ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_interface.h
           CACHE INTERNAL "List of CPP headers")
 

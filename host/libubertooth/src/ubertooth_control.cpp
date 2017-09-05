@@ -21,7 +21,7 @@
 
 #include <string.h>
 #include <btbb.h>
-#include <stdio.h>
+#include <iostream>
 #include "ubertooth_control.h"
 
 #define CTRL_IN     (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN)
@@ -29,37 +29,7 @@
 
 void show_libusb_error(int error_code)
 {
-	char *error_hint = "";
-	const char *error_name;
-
-	/* Available only in libusb > 1.0.3 */
-	// error_name = libusb_error_name(error_code);
-
-#if defined(LIBUSB_API_VERSION) && (LIBUSB_API_VERSION >= 0x01000103)
-	error_name = libusb_strerror(error_code);
-#else
-	switch (error_code) {
-		case LIBUSB_ERROR_TIMEOUT:
-			error_name="Timeout";
-			break;
-		case LIBUSB_ERROR_NO_DEVICE:
-			error_name="No Device";
-			error_hint="Check Ubertooth is connected to host";
-			break;
-		case LIBUSB_ERROR_ACCESS:
-			error_name="Insufficient Permissions";
-			break;
-		case LIBUSB_ERROR_OVERFLOW:
-			error_name="Overflow";
-			error_hint="Try resetting the Ubertooth";
-			break;
-		default:
-			error_name="Command Error";
-			break;
-	}
-#endif
-
-	fprintf(stderr,"libUSB Error: %s: %s (%d)\n", error_name, error_hint, error_code);
+	std::cerr << "libUSB Error: " << libusb_error_name(error_code) << ": " << libusb_strerror((libusb_error)error_code) << " (" << error_code << ")" << std::endl;
 }
 
 static void callback(struct libusb_transfer* transfer)
@@ -73,91 +43,51 @@ static void callback(struct libusb_transfer* transfer)
 void cmd_trim_clock(struct libusb_device_handle* devh, uint16_t offset)
 {
 	uint8_t data[2] = {
-		(offset >> 8) & 0xff,
-		(offset >> 0) & 0xff
+		(uint8_t)((offset >> 8) & 0xff),
+		(uint8_t)((offset >> 0) & 0xff)
 	};
 
-	ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_TRIM_CLOCK, data, 2);
+	ubertooth_cmd_async(devh, CTRL_OUT, Command::UBERTOOTH_TRIM_CLOCK, data, 2);
 }
 
 void cmd_fix_clock_drift(struct libusb_device_handle* devh, int16_t ppm)
 {
 	uint8_t data[2] = {
-		(ppm >> 8) & 0xff,
-		(ppm >> 0) & 0xff
+		(uint8_t)((ppm >> 8) & 0xff),
+		(uint8_t)((ppm >> 0) & 0xff)
 	};
 
-	ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_FIX_CLOCK_DRIFT, data, 2);
+	ubertooth_cmd_async(devh, CTRL_OUT, Command::UBERTOOTH_FIX_CLOCK_DRIFT, data, 2);
 }
 
 int cmd_ping(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_PING, 0, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_PING, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_rx_syms(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_RX_SYMBOLS, 0, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_RX_SYMBOLS, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_tx_syms(struct libusb_device_handle* devh)
 {
-	return ubertooth_cmd_sync(devh, CTRL_OUT, UBERTOOTH_TX_SYMBOLS, 0, 0);
+	return ubertooth_cmd_async(devh, CTRL_OUT, Command::UBERTOOTH_TX_SYMBOLS, 0, 0);
 }
 
 int cmd_specan(struct libusb_device_handle* devh, uint16_t low_freq, uint16_t high_freq)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SPECAN,
-			low_freq, high_freq, NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SPECAN, low_freq, high_freq, NULL, 0, 1000);
 }
 
 int cmd_led_specan(struct libusb_device_handle* devh, uint16_t rssi_threshold)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_LED_SPECAN,
-			rssi_threshold, 0, NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_LED_SPECAN, rssi_threshold, 0, NULL, 0, 1000);
 }
 
 int cmd_set_usrled(struct libusb_device_handle* devh, uint16_t state)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_USRLED, state, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_USRLED, state, 0, NULL, 0, 1000);
 }
 
 int cmd_get_usrled(struct libusb_device_handle* devh)
@@ -165,7 +95,7 @@ int cmd_get_usrled(struct libusb_device_handle* devh)
 	uint8_t state;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_USRLED, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_USRLED, 0, 0,
 			&state, 1, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -176,15 +106,7 @@ int cmd_get_usrled(struct libusb_device_handle* devh)
 
 int cmd_set_rxled(struct libusb_device_handle* devh, uint16_t state)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_RXLED, state, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_RXLED, state, 0, NULL, 0, 1000);
 }
 
 int cmd_get_rxled(struct libusb_device_handle* devh)
@@ -192,7 +114,7 @@ int cmd_get_rxled(struct libusb_device_handle* devh)
 	uint8_t state;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_RXLED, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_RXLED, 0, 0,
 			&state, 1, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -203,15 +125,7 @@ int cmd_get_rxled(struct libusb_device_handle* devh)
 
 int cmd_set_txled(struct libusb_device_handle* devh, uint16_t state)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_TXLED, state, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_TXLED, state, 0, NULL, 0, 1000);
 }
 
 int cmd_get_txled(struct libusb_device_handle* devh)
@@ -219,7 +133,7 @@ int cmd_get_txled(struct libusb_device_handle* devh)
 	uint8_t state;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_TXLED, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_TXLED, 0, 0,
 			&state, 1, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -233,7 +147,7 @@ int cmd_get_modulation(struct libusb_device_handle* devh)
 	uint8_t modulation;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_MOD, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_MOD, 0, 0,
 			&modulation, 1, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -247,7 +161,7 @@ int cmd_get_channel(struct libusb_device_handle* devh)
 {
 	uint8_t result[2];
 	int r;
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_CHANNEL, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_CHANNEL, 0, 0,
 			result, 2, 1000);
 	if (r == LIBUSB_ERROR_PIPE) {
 		fprintf(stderr, "control message unsupported\n");
@@ -263,18 +177,7 @@ int cmd_get_channel(struct libusb_device_handle* devh)
 
 int cmd_set_channel(struct libusb_device_handle* devh, uint16_t channel)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_CHANNEL, channel, 0,
-			NULL, 0, 1000);
-	if (r == LIBUSB_ERROR_PIPE) {
-		fprintf(stderr, "control message unsupported\n");
-		return r;
-	} else if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_CHANNEL, channel, 0, NULL, 0, 1000);
 }
 
 int cmd_get_partnum(struct libusb_device_handle* devh)
@@ -282,7 +185,7 @@ int cmd_get_partnum(struct libusb_device_handle* devh)
 	uint8_t result[5];
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_PARTNUM, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_PARTNUM, 0, 0,
 			result, 5, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -310,7 +213,7 @@ void print_serial(uint8_t *serial, FILE *fileptr)
 int cmd_get_serial(struct libusb_device_handle* devh, uint8_t *serial)
 {
 	int r;
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_SERIAL, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_SERIAL, 0, 0,
 			serial, 17, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -325,125 +228,42 @@ int cmd_get_serial(struct libusb_device_handle* devh, uint8_t *serial)
 
 int cmd_set_modulation(struct libusb_device_handle* devh, uint16_t mod)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_MOD, mod, 0,
-			NULL, 0, 1000);
-	if (r == LIBUSB_ERROR_PIPE) {
-		fprintf(stderr, "control message unsupported\n");
-		return r;
-	} else if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_MOD, mod, 0, NULL, 0, 1000);
 }
 
 int cmd_set_isp(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_ISP, 0, 0,
-			NULL, 0, 1000);
-	/* LIBUSB_ERROR_PIPE or LIBUSB_ERROR_OTHER is expected */
-	if (r && (r != LIBUSB_ERROR_PIPE) && (r != LIBUSB_ERROR_OTHER) &&
-		(r != LIBUSB_ERROR_NO_DEVICE)) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_ISP, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_reset(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_RESET, 0, 0,
-			NULL, 0, 1000);
-	/* LIBUSB_ERROR_PIPE or LIBUSB_ERROR_OTHER is expected */
-	if (r && (r != LIBUSB_ERROR_PIPE) && (r != LIBUSB_ERROR_OTHER) &&
-		(r != LIBUSB_ERROR_NO_DEVICE)) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_RESET, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_stop(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_STOP, 0, 0,
-			NULL, 0, 1000);
-	if (r == LIBUSB_ERROR_PIPE) {
-		fprintf(stderr, "control message unsupported\n");
-		return r;
-	} else if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_STOP, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_set_paen(struct libusb_device_handle* devh, uint16_t state)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_PAEN, state, 0,
-			NULL, 0, 1000);
-	if (r == LIBUSB_ERROR_PIPE) {
-		fprintf(stderr, "control message unsupported\n");
-		return r;
-	} else if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_PAEN, state, 0, NULL, 0, 1000);
 }
 
 int cmd_set_hgm(struct libusb_device_handle* devh, uint16_t state)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_HGM, state, 0,
-			NULL, 0, 1000);
-	if (r == LIBUSB_ERROR_PIPE) {
-		fprintf(stderr, "control message unsupported\n");
-		return r;
-	} else if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_HGM, state, 0, NULL, 0, 1000);
 }
 
 int cmd_tx_test(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_TX_TEST, 0, 0,
-			NULL, 0, 1000);
-	if (r == LIBUSB_ERROR_PIPE) {
-		fprintf(stderr, "control message unsupported\n");
-		return r;
-	} else if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_TX_TEST, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_flash(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_FLASH, 0, 0,
-			NULL, 0, 1000);
-	if (r != LIBUSB_SUCCESS) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_FLASH, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_get_palevel(struct libusb_device_handle* devh)
@@ -451,7 +271,7 @@ int cmd_get_palevel(struct libusb_device_handle* devh)
 	uint8_t level;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_PALEVEL, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_PALEVEL, 0, 0,
 			&level, 1, 3000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -462,19 +282,7 @@ int cmd_get_palevel(struct libusb_device_handle* devh)
 
 int cmd_set_palevel(struct libusb_device_handle* devh, uint16_t level)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_PALEVEL, level, 0,
-			NULL, 0, 3000);
-	if (r != LIBUSB_SUCCESS) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_PALEVEL, level, 0, NULL, 0, 3000);
 }
 
 int cmd_get_rangeresult(struct libusb_device_handle* devh,
@@ -483,7 +291,7 @@ int cmd_get_rangeresult(struct libusb_device_handle* devh,
 	uint8_t result[5];
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_RANGE_CHECK, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_RANGE_CHECK, 0, 0,
 			result, sizeof(result), 3000);
 	if (r < LIBUSB_SUCCESS) {
 		if (r == LIBUSB_ERROR_PIPE) {
@@ -505,36 +313,12 @@ int cmd_get_rangeresult(struct libusb_device_handle* devh,
 
 int cmd_range_test(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_RANGE_TEST, 0, 0,
-			NULL, 0, 1000);
-	if (r != LIBUSB_SUCCESS) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_RANGE_TEST, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_repeater(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_REPEATER, 0, 0,
-			NULL, 0, 1000);
-	if (r != LIBUSB_SUCCESS) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_REPEATER, 0, 0, NULL, 0, 1000);
 }
 
 void cmd_get_rev_num(struct libusb_device_handle* devh, char *version, uint8_t len)
@@ -542,7 +326,7 @@ void cmd_get_rev_num(struct libusb_device_handle* devh, char *version, uint8_t l
 	uint8_t result[2 + 1 + 255];
 	uint16_t result_ver;
 	int r;
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_REV_NUM, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_REV_NUM, 0, 0,
 			result, sizeof(result), 1000);
 	if (r == LIBUSB_ERROR_PIPE) {
 		fprintf(stderr, "control message unsupported\n");
@@ -570,7 +354,7 @@ void cmd_get_compile_info(struct libusb_device_handle* devh, char *compile_info,
 {
 	uint8_t result[1 + 255];
 	int r;
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_COMPILE_INFO, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_COMPILE_INFO, 0, 0,
 			result, sizeof(result), 1000);
 	if (r == LIBUSB_ERROR_PIPE) {
 		fprintf(stderr, "control message unsupported\n");
@@ -593,7 +377,7 @@ int cmd_get_board_id(struct libusb_device_handle* devh)
 {
 	uint8_t board_id;
 	int r;
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_BOARD_ID, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_BOARD_ID, 0, 0,
 			&board_id, 1, 1000);
 	if (r == LIBUSB_ERROR_PIPE) {
 		fprintf(stderr, "control message unsupported\n");
@@ -608,18 +392,7 @@ int cmd_get_board_id(struct libusb_device_handle* devh)
 
 int cmd_set_squelch(struct libusb_device_handle* devh, uint16_t level)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_SQUELCH, level, 0, NULL, 0, 3000);
-	if (r != LIBUSB_SUCCESS) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_SQUELCH, level, 0, NULL, 0, 3000);
 }
 
 int cmd_get_squelch(struct libusb_device_handle* devh)
@@ -627,7 +400,7 @@ int cmd_get_squelch(struct libusb_device_handle* devh)
 	uint8_t level;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_SQUELCH, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_SQUELCH, 0, 0,
 			&level, 1, 3000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -650,7 +423,7 @@ int cmd_set_bdaddr(struct libusb_device_handle* devh, uint64_t address)
 	for(r=0; r < 8; r++)
 		data[r+8] = (syncword >> (8*r)) & 0xff;
 
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_BDADDR, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_BDADDR, 0, 0,
 		data, data_len, 1000);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
@@ -676,16 +449,7 @@ int cmd_start_hopping(struct libusb_device_handle* devh, int clkn_offset, int cl
 	data[4] = (clk100ns_offset >> 8) & 0xff;
 	data[5] = (clk100ns_offset >> 0) & 0xff;
 
-	r = ubertooth_cmd_async(devh, CTRL_OUT, UBERTOOTH_START_HOPPING, data, 6);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_async(devh, CTRL_OUT, Command::UBERTOOTH_START_HOPPING, data, 6);
 }
 
 int cmd_set_clock(struct libusb_device_handle* devh, uint32_t clkn)
@@ -695,17 +459,7 @@ int cmd_set_clock(struct libusb_device_handle* devh, uint32_t clkn)
 	for(r=0; r < 4; r++)
 		data[r] = (clkn >> (8*r)) & 0xff;
 
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_CLOCK, 0, 0,
-		data, 4, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_CLOCK, 0, 0, data, 4, 1000);
 }
 
 uint32_t cmd_get_clock(struct libusb_device_handle* devh)
@@ -714,7 +468,7 @@ uint32_t cmd_get_clock(struct libusb_device_handle* devh)
 	unsigned char data[4];
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_CLOCK, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_CLOCK, 0, 0,
 			data, 4, 3000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -727,48 +481,17 @@ uint32_t cmd_get_clock(struct libusb_device_handle* devh)
 
 int cmd_btle_sniffing(struct libusb_device_handle* devh, uint16_t num)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SNIFFING, num, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_BTLE_SNIFFING, num, 0, NULL, 0, 1000);
 }
 
 int cmd_set_afh_map(struct libusb_device_handle* devh, uint8_t* afh_map)
 {
-	uint8_t buffer[LIBUSB_CONTROL_SETUP_SIZE+10];
-	struct libusb_transfer *xfer = libusb_alloc_transfer(0);
-
-	libusb_fill_control_setup(buffer, CTRL_OUT, UBERTOOTH_SET_AFHMAP, 0, 0, 10);
-	memcpy ( &buffer[LIBUSB_CONTROL_SETUP_SIZE], afh_map, 10 );
-	libusb_fill_control_transfer(xfer, devh, buffer, callback, NULL, 1000);
-	libusb_submit_transfer(xfer);
-
-	return 0;
+	return ubertooth_cmd_async(devh, CTRL_OUT, Command::UBERTOOTH_SET_AFHMAP, afh_map, 10);
 }
 
 int cmd_clear_afh_map(struct libusb_device_handle* devh)
 {
-	int r;
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_CLEAR_AFHMAP, 0, 0,
-		NULL, 0, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_CLEAR_AFHMAP, 0, 0, NULL, 0, 1000);
 }
 
 uint32_t cmd_get_access_address(struct libusb_device_handle* devh)
@@ -777,7 +500,7 @@ uint32_t cmd_get_access_address(struct libusb_device_handle* devh)
 	unsigned char data[4];
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_ACCESS_ADDRESS, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_ACCESS_ADDRESS, 0, 0,
 			data, 4, 3000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -789,42 +512,21 @@ uint32_t cmd_get_access_address(struct libusb_device_handle* devh)
 
 int cmd_set_access_address(struct libusb_device_handle* devh, uint32_t access_address)
 {
-	int r;
 	uint8_t data[4];
-	for(r=0; r < 4; r++)
-		data[r] = (access_address >> (8*r)) & 0xff;
+	for(int i=0; i < 4; i++)
+		data[i] = (access_address >> (8*i)) & 0xff;
 
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_ACCESS_ADDRESS, 0, 0,
-		data, 4, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_ACCESS_ADDRESS, 0, 0, data, 4, 1000);
 }
 
 int cmd_do_something(struct libusb_device_handle *devh, unsigned char *data, int len)
 {
-	int r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_DO_SOMETHING, 0, 0,
-				data, len, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_DO_SOMETHING, 0, 0, data, len, 1000);
 }
 
 int cmd_do_something_reply(struct libusb_device_handle* devh, unsigned char *data, int len)
 {
-	int r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_DO_SOMETHING_REPLY, 0, 0,
+	int r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_DO_SOMETHING_REPLY, 0, 0,
 				data, len, 3000);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
@@ -842,7 +544,7 @@ int cmd_get_crc_verify(struct libusb_device_handle* devh)
 	uint8_t verify;
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_GET_CRC_VERIFY, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_GET_CRC_VERIFY, 0, 0,
 			&verify, 1, 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -853,22 +555,14 @@ int cmd_get_crc_verify(struct libusb_device_handle* devh)
 
 int cmd_set_crc_verify(struct libusb_device_handle* devh, int verify)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_SET_CRC_VERIFY, verify, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		show_libusb_error(r);
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_SET_CRC_VERIFY, verify, 0, NULL, 0, 1000);
 }
 
 int cmd_poll(struct libusb_device_handle* devh, usb_pkt_rx *p)
 {
 	int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_POLL, 0, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_POLL, 0, 0,
 			(uint8_t *)p, sizeof(usb_pkt_rx), 1000);
 	if (r < 0) {
 		show_libusb_error(r);
@@ -879,19 +573,7 @@ int cmd_poll(struct libusb_device_handle* devh, usb_pkt_rx *p)
 
 int cmd_btle_promisc(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_PROMISC, 0, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_BTLE_PROMISC, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_read_register(struct libusb_device_handle* devh, uint8_t reg)
@@ -899,7 +581,7 @@ int cmd_read_register(struct libusb_device_handle* devh, uint8_t reg)
 	int r;
 	uint8_t data[2];
 
-	r = libusb_control_transfer(devh, CTRL_IN, UBERTOOTH_READ_REGISTER, reg, 0,
+	r = ubertooth_cmd_sync(devh, CTRL_IN, Command::UBERTOOTH_READ_REGISTER, reg, 0,
 			data, 2, 1000);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
@@ -915,90 +597,27 @@ int cmd_read_register(struct libusb_device_handle* devh, uint8_t reg)
 
 int cmd_btle_slave(struct libusb_device_handle* devh, uint8_t *mac_address)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SLAVE, 0, 0,
-			mac_address, 6, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_BTLE_SLAVE, 0, 0, mac_address, 6, 1000);
 }
 
 int cmd_btle_set_target(struct libusb_device_handle* devh, uint8_t *mac_address)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_BTLE_SET_TARGET, 0, 0,
-			mac_address, 6, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_BTLE_SET_TARGET, 0, 0, mac_address, 6, 1000);
 }
 
-int cmd_set_jam_mode(struct libusb_device_handle* devh, int mode) {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_JAM_MODE, mode, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-
-	return 0;
+int cmd_set_jam_mode(struct libusb_device_handle* devh, int mode)
+{
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_JAM_MODE, mode, 0, NULL, 0, 1000);
 }
 
 int cmd_ego(struct libusb_device_handle* devh, int mode)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_EGO, mode, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_EGO, mode, 0, NULL, 0, 1000);
 }
 
 int cmd_afh(struct libusb_device_handle* devh)
 {
-	int r;
-
-	r = libusb_control_transfer(devh, CTRL_OUT, UBERTOOTH_AFH, 0, 0,
-			NULL, 0, 1000);
-	if (r < 0) {
-		if (r == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
-		} else {
-			show_libusb_error(r);
-		}
-		return r;
-	}
-
-	return 0;
+	return ubertooth_cmd_sync(devh, CTRL_OUT, Command::UBERTOOTH_AFH, 0, 0, NULL, 0, 1000);
 }
 
 int cmd_hop(struct libusb_device_handle* devh)
@@ -1006,7 +625,7 @@ int cmd_hop(struct libusb_device_handle* devh)
 	uint8_t buffer[LIBUSB_CONTROL_SETUP_SIZE];
 	struct libusb_transfer *xfer = libusb_alloc_transfer(0);
 
-	libusb_fill_control_setup(buffer, CTRL_OUT, Command::UBERTOOTH_HOP, 0, 0, 0);
+	libusb_fill_control_setup(buffer, CTRL_OUT, (uint8_t)Command::UBERTOOTH_HOP, 0, 0, 0);
 	libusb_fill_control_transfer(xfer, devh, buffer, callback, NULL, 1000);
 	libusb_submit_transfer(xfer);
 
@@ -1015,14 +634,16 @@ int cmd_hop(struct libusb_device_handle* devh)
 
 int ubertooth_cmd_sync(struct libusb_device_handle* devh,
                        uint8_t type,
-                       uint8_t command,
+                       Command command,
+                       uint16_t wValue,
+                       uint16_t wIndex,
                        uint8_t* data,
-                       uint16_t size)
+                       uint16_t size,
+                       unsigned int timeout)
 {
 	int r;
 
-	r = libusb_control_transfer(devh, type, command, 0, 0,
-			data, size, 1000);
+	r = libusb_control_transfer(devh, type, (uint8_t)command, wValue, wIndex, data, size, timeout);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
 			fprintf(stderr, "control message unsupported\n");
@@ -1037,7 +658,7 @@ int ubertooth_cmd_sync(struct libusb_device_handle* devh,
 
 int ubertooth_cmd_async(struct libusb_device_handle* devh,
                         uint8_t type,
-                        uint8_t command,
+                        Command command,
                         uint8_t* data,
                         uint16_t size)
 {
@@ -1046,13 +667,13 @@ int ubertooth_cmd_async(struct libusb_device_handle* devh,
 	uint8_t buffer[LIBUSB_CONTROL_SETUP_SIZE + size];
 	struct libusb_transfer* xfer = libusb_alloc_transfer(0);
 
-	libusb_fill_control_setup(buffer, type, command, 0, 0, size);
+	libusb_fill_control_setup(buffer, type, (uint8_t)command, 0, 0, size);
 	if(size > 0)
 		memcpy ( &buffer[LIBUSB_CONTROL_SETUP_SIZE], data, size );
 	libusb_fill_control_transfer(xfer, devh, buffer, callback, NULL, 1000);
-	xfer->status = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
-	r = libusb_submit_transfer(xfer);
+	xfer->status = (libusb_transfer_status)(LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER);
 
+	r = libusb_submit_transfer(xfer);
 	if (r < 0)
 		show_libusb_error(r);
 

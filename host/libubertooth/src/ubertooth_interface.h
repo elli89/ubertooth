@@ -22,15 +22,49 @@
 #ifndef __UBERTOOTH_INTERFACE_H
 #define __UBERTOOTH_INTERFACE_H
 
-#include <stdint.h>
-#include <stdbool.h>
+
+#if defined __MACH__
+#include <CoreServices/CoreServices.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#define htobe32 EndianU32_NtoB
+#define be32toh EndianU32_BtoN
+#define le32toh EndianU32_LtoN
+#define htobe64 EndianU64_NtoB
+#define be64toh EndianU64_BtoN
+#define htole16 EndianU16_NtoL
+#define htole32 EndianU32_NtoL
+#else
+#include <endian.h>
+#endif
+
+#include <cstdint>
 
 // increment on every API change
-#define UBERTOOTH_API_VERSION 1
+#define UBERTOOTH_API_VERSION 0x0102
 
 #define DMA_SIZE 50
 
 #define NUM_BREDR_CHANNELS 79
+
+#define U0_VENDORID    0x1d50
+#define U0_PRODUCTID   0x6000
+#define U1_VENDORID    0x1d50
+#define U1_PRODUCTID   0x6002
+#define TC13_VENDORID  0xffff
+#define TC13_PRODUCTID 0x0004
+
+#define DATA_IN     (0x82 | LIBUSB_ENDPOINT_IN)
+#define DATA_OUT    (0x05 | LIBUSB_ENDPOINT_OUT)
+#define TIMEOUT     20000
+
+/* RX USB packet parameters */
+#define PKT_LEN       64
+#define SYM_LEN       50
+#define BANK_LEN      (SYM_LEN * 8)
+
+#define MAX(a,b) ((a)>(b) ? (a) : (b))
+#define MIN(a,b) ((a)<(b) ? (a) : (b))
 
 /*
  * CLK_TUNE_TIME is the duration in units of 100 ns that we reserve for tuning
@@ -40,7 +74,7 @@
 #define CLK_TUNE_TIME   2250
 #define CLK_TUNE_OFFSET  200
 
-enum class ubertooth_usb_commands {
+enum class Command : uint8_t {
 	UBERTOOTH_PING               = 0,
 	UBERTOOTH_RX_SYMBOLS         = 1,
 	UBERTOOTH_TX_SYMBOLS         = 2,
@@ -105,12 +139,12 @@ enum class ubertooth_usb_commands {
 	UBERTOOTH_AFH                = 61,
 	UBERTOOTH_HOP                = 62,
 	UBERTOOTH_TRIM_CLOCK         = 63,
-	UBERTOOTH_GET_API_VERSION    = 64,
+	// UBERTOOTH_GET_API_VERSION    = 64,
 	UBERTOOTH_WRITE_REGISTERS    = 65,
 	UBERTOOTH_READ_ALL_REGISTERS = 66,
 	UBERTOOTH_RX_GENERIC         = 67,
 	UBERTOOTH_TX_GENERIC_PACKET  = 68,
-	UBERTOOTH_FIX_CLOCK_DRIFT    = 69,
+	UBERTOOTH_FIX_CLOCK_DRIFT    = 69
 };
 
 enum class jam_modes {
