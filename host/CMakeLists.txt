@@ -57,11 +57,11 @@ endif( ${BUILD_STATIC_BINS} AND NOT ${BUILD_STATIC_LIB} )
 
 add_subdirectory(libubertooth)
 add_subdirectory(ubertooth-tools)
-# add_subdirectory(doc)
-# add_subdirectory(misc)
-# if(${ENABLE_PYTHON})
-# 	add_subdirectory(python)
-# endif()
+add_subdirectory(doc)
+add_subdirectory(misc)
+if(${ENABLE_PYTHON})
+	add_subdirectory(python)
+endif()
 
 # Create uninstall target
 configure_file(

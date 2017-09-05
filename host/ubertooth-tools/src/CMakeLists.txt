@@ -60,7 +60,7 @@ if(USE_OWN_GNU_GETOPT)
 endif(USE_OWN_GNU_GETOPT)
 
 # LIST(APPEND TOOLS ubertooth-rx ubertooth-tx ubertooth-dump ubertooth-util ubertooth-btle ubertooth-dfu ubertooth-specan ubertooth-ego ubertooth-afh)
-LIST(APPEND TOOLS ubertooth-dump ubertooth-dfu)
+LIST(APPEND TOOLS ubertooth-dump ubertooth-dfu ubertooth-specan)
 
 if( USE_BLUEZ AND NOT ${LIBBLUETOOTH_FOUND} )
 	message( FATAL_ERROR
