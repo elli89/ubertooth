@@ -29,4 +29,5 @@ protected:
 	static void* poll(void* arg __attribute__((unused)));
 
 	static void cb_xfer(struct libusb_transfer* xfer);
+	static usb_pkt_rx buffer;
 };

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <iomanip>
 
 static void usage(void)
 {
@@ -80,13 +81,6 @@ int main(int argc, char* argv[])
 
 	Ubertooth ut(ubertooth_device);
 
-	uint8_t serial[17];
-	ut.cmd_get_serial(serial);
-	std::cerr << "Serial No: " << std::hex;
-	for(int i=1; i<17; i++)
-		std::cerr << (int)serial[i];
-	std::cerr << std::dec << std::endl;
-
 	ut.cmd_set_modulation(mod);
 
 	ut.cmd_rx_syms();
@@ -95,9 +89,9 @@ int main(int argc, char* argv[])
 	for ( int count =0; count<10; count++) {
 		usb_pkt_rx pkt = ut.receive();
 
-		for(int i=0; i<50; i++)
-			std::cout << pkt.data[i] << " ";
-		std::cout << std::endl;
+		for(int i=0; i<DMA_SIZE; i++)
+			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)pkt.data[i]; // << " ";
+		std::cout << std::dec << std::endl;
 	}
 	ut.stop();
 	return 0;

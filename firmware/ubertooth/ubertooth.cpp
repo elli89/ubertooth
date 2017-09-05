@@ -24,7 +24,7 @@
 
 #include <ubertooth.h>
 #include "ubertooth_usb.h"
-#include "ubertooth_interface.h"
+#include <ubertooth_interface.h>
 #include "ubertooth_rssi.h"
 #include "ubertooth_cs.h"
 #include "ubertooth_dma.h"
@@ -35,8 +35,7 @@
 #include "ego.h"
 
 /* build info */
-const char compile_info[] =
-	"ubertooth ";// GIT_REVISION " (" COMPILE_BY "@" COMPILE_HOST ") " TIMESTAMP;
+const char compile_info[] = "ubertooth "; // GIT_REVISION " (" COMPILE_BY "@" COMPILE_HOST ") " TIMESTAMP;
 
 /* hopping stuff */
 volatile HopMode  hop_mode = HopMode::NONE;
@@ -2334,7 +2333,7 @@ void rx_generic_sync(void) {
 
 void rx_generic(void) {
 	// Check for packet mode
-	if(cc2400_get(GRMDM) && 0x0400) {
+	if(cc2400_get(GRMDM) & 0x0400) {
 		rx_generic_sync();
 	} else {
 		modulation = Modulation::NONE;

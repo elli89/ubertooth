@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, 2011 Michael Ossmann
+ * Copyright 2010 - 2013 Michael Ossmann, Dominic Spill, Will Code, Mike Ryan
  *
  * This file is part of Project Ubertooth.
  *
@@ -19,46 +19,38 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <iostream>
-#include <iomanip>
+#pragma once
 
-#include "ubertooth.h"
+#include "basic_ubertooth.h"
+#include "dfu_interface.h"
 
-#include "packetsource_ubertooth.h"
+#include <fstream>
 
-void Ubertooth::start()
+class DfuUbertooth : public BasicUbertooth
 {
-	source->start();
-}
 
-void Ubertooth::stop()
-{
-	source->stop();
-}
+public:
+	DfuUbertooth();
+	DfuUbertooth(int ubertooth_device);
 
-usb_pkt_rx Ubertooth::receive()
-{
-	return source->receive();
-}
+	~DfuUbertooth();
 
-Ubertooth::Ubertooth(int ubertooth_device)
-{
-	connect(ubertooth_device);
-	source = new PacketsourceUbertooth(devh);
-}
+	int connect_to_dfu_device(int ubertooth_device);
 
-Ubertooth::~Ubertooth()
-{
-	stop();
+	int enter_dfu_mode();
 
-	delete source;
+	int connect(int ubertooth_device);
+	int detach();
+	int upload(const std::string& filename);
+	int download(const std::string& filename);
 
-	if (h_pcap_bredr != NULL)
-		btbb_pcap_close(h_pcap_bredr);
-	if (h_pcap_le != NULL)
-		lell_pcap_close(h_pcap_le);
-	if (h_pcapng_bredr != NULL)
-		btbb_pcapng_close(h_pcapng_bredr);
-	if (h_pcapng_le != NULL)
-		lell_pcapng_close(h_pcapng_le);
-}
+public:
+
+	int cmd_detach();
+	size_t cmd_download(size_t block, uint8_t* buffer);
+	size_t cmd_upload(size_t block, uint8_t* buffer);
+	int cmd_get_status();
+	int cmd_clear_status();
+	uint8_t cmd_get_state();
+	int cmd_abort();
+};

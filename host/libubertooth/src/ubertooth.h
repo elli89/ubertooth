@@ -19,21 +19,17 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __UBERTOOTH_H__
-#define __UBERTOOTH_H__
+#pragma once
 
+#include "basic_ubertooth.h"
 #include "ubertooth_interface.h"
-#include <stdlib.h>
-#include <libusb-1.0/libusb.h>
 #include "packetsource.h"
 #include <btbb.h>
 
-class Ubertooth
+class Ubertooth : public BasicUbertooth
 {
-private:
+protected:
 	Packetsource* source = NULL;
-
-	struct libusb_device_handle* devh = NULL;
 
 	uint64_t abs_start_ns   = 0;
 	uint32_t start_clk100ns = 0;
@@ -45,36 +41,15 @@ private:
 	btbb_pcapng_handle* h_pcapng_bredr = NULL;
 	lell_pcapng_handle* h_pcapng_le = NULL;
 
-	struct libusb_device_handle* find_ubertooth_device(int ubertooth_device);
-
 public:
 	Ubertooth();
 	Ubertooth(int ubertooth_device);
 
 	~Ubertooth();
 
-	int connect(int ubertooth_device);
 	void start();
 	void stop();
 	usb_pkt_rx receive();
-
-protected:
-
-	static void show_libusb_error(int error_code);
-	static void cmd_callback(struct libusb_transfer* transfer);
-	int cmd_sync(uint8_t type,
-	             UbertoothCommand command,
-	             uint16_t wValue,
-	             uint16_t wIndex,
-	             uint8_t* data,
-	             uint16_t size,
-	             unsigned int timeout);
-	int cmd_async(uint8_t type,
-	              UbertoothCommand command,
-	              uint16_t wValue,
-	              uint16_t wIndex,
-	              uint8_t* data,
-	              uint16_t size);
 
 public:
 	void cmd_trim_clock(uint16_t offset);
@@ -100,7 +75,6 @@ public:
 	int cmd_set_paen(uint16_t state);
 	int cmd_set_hgm(uint16_t state);
 	int cmd_tx_test();
-	int cmd_flash();
 	int cmd_get_palevel();
 	int cmd_set_palevel(uint16_t level);
 	uint16_t cmd_get_channel();
@@ -138,5 +112,3 @@ public:
 	int cmd_afh();
 	void cmd_hop();
 };
-
-#endif /* __UBERTOOTH_H__ */

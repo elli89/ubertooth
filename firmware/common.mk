@@ -102,7 +102,7 @@ OBJDIR = .
 # Optimization level, can be [0, 1, 2, 3, s].
 #     0 = turn off optimization. s = optimize for size.
 #     (Note: 3 is not always the best optimization level. See libc FAQ.)
-OPT = s
+OPT = 0
 
 # Debugging format.
 DEBUG = dwarf-2 -g3
@@ -203,7 +203,7 @@ CPPFLAGS += -Weffc++
 #CPPFLAGS += -Wsign-compare
 CPPFLAGS += -Wa,-alhms=$(<:%.cpp=$(OBJDIR)/%.lst)
 CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
-#CPPFLAGS += $(CSTANDARD)
+CPPFLAGS += $(CPPSTANDARD)
 CPPFLAGS += $(GIT_REVISION)
 CPPFLAGS += $(COMPILE_BY)
 CPPFLAGS += $(COMPILE_HOST)

@@ -19,8 +19,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __UBERTOOTH_INTERFACE_H
-#define __UBERTOOTH_INTERFACE_H
+#pragma once
 
 
 #if defined __MACH__
@@ -38,8 +37,8 @@
 #include <endian.h>
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <cstdint>
+#include <cstdlib>
 
 // increment on every API change
 #define UBERTOOTH_API_VERSION 0x0102
@@ -48,21 +47,10 @@
 
 #define NUM_BREDR_CHANNELS 79
 
-#define U0_VENDORID    0x1d50
-#define U0_PRODUCTID   0x6000
-#define U1_VENDORID    0x1d50
-#define U1_PRODUCTID   0x6002
-#define TC13_VENDORID  0xffff
-#define TC13_PRODUCTID 0x0004
-
-#define DATA_IN     (0x82 | LIBUSB_ENDPOINT_IN)
-#define DATA_OUT    (0x05 | LIBUSB_ENDPOINT_OUT)
-#define TIMEOUT     20000
-
 /* RX USB packet parameters */
-#define PKT_LEN       64
-#define SYM_LEN       50
-#define BANK_LEN      (SYM_LEN * 8)
+constexpr const size_t PKT_LEN  = 64;
+constexpr const size_t SYM_LEN  = 50;
+constexpr const size_t BANK_LEN = (SYM_LEN * 8);
 
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
@@ -227,5 +215,3 @@ typedef struct {
 	uint8_t  pa_level;
 	uint8_t  data[DMA_SIZE];
 } generic_tx_packet;
-
-#endif /* __UBERTOOTH_INTERFACE_H */

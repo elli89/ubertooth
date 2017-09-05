@@ -74,12 +74,11 @@ uint16_t btle_channel_index_to_phys(uint8_t idx) {
 //
 uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, size_t len) {
 	uint32_t state = crc_init & 0xffffff;
-	uint32_t lfsr_mask = 0x5a6000; // 010110100110000000000000
-	int i, j;
+	constexpr const uint32_t lfsr_mask = 0x5a6000; // 010110100110000000000000
 
-	for (i = 0; i < len; ++i) {
+	for (size_t i = 0; i < len; ++i) {
 		uint8_t cur = data[i];
-		for (j = 0; j < 8; ++j) {
+		for (size_t j = 0; j < 8; ++j) {
 			int next_bit = (state ^ cur) & 1;
 			cur >>= 1;
 			state >>= 1;

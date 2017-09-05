@@ -1,61 +1,71 @@
 /* -*- c -*- */
 /*
  * Copyright 2015 Dominic Spill
- * 
+ *
  * This file is part of Project Ubertooth
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with libbtbb; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
 
-#define REQ_DETACH 0
-#define REQ_DNLOAD 1
-#define REQ_UPLOAD 2
-#define REQ_GETSTATUS 3
-#define REQ_CLRSTATUS 4
-#define REQ_GETSTATE 5
-#define REQ_ABORT 6
+#pragma once
 
-#define STATE_APP_IDLE 0
-#define STATE_APP_DETACH 1
-#define STATE_DFU_IDLE 2
-#define STATE_DFU_DNLOAD_SYNC 3
-#define STATE_DFU_DNBUSY 4
-#define STATE_DFU_DNLOAD_IDLE 5
-#define STATE_DFU_MANIFEST_SYNC 6
-#define STATE_DFU_MANIFEST 7
-#define STATE_DFU_MANIFEST_WAIT_RESET 8
-#define STATE_DFU_UPLOAD_IDLE 9
-#define STATE_DFU_ERROR 10
+#include <inttypes.h>
 
-#define STATUS_OK 0x0
-#define STATUS_ERR_TARGET 0x1
-#define STATUS_ERR_FILE 0x2
-#define STATUS_ERR_WRITE 0x3
-#define STATUS_ERR_ERASE 0x4
-#define STATUS_ERR_CHECK_ERASED 0x5
-#define STATUS_ERR_PROG 0x6
-#define STATUS_ERR_VERIFY 0x7
-#define STATUS_ERR_ADDRESS 0x8
-#define STATUS_ERR_NOTDONE 0x9
-#define STATUS_ERR_FIRMWARE 0xA
-#define STATUS_ERR_VENDOR 0xB
-#define STATUS_ERR_USBR 0xC
-#define STATUS_ERR_POR 0xD
-#define STATUS_ERR_UNKNOWN 0xE
-#define STATUS_ERR_STALLEDPKT 0xF
+enum class DfuCommand : uint8_t {
+	DETACH = 0,
+	DOWNLOAD = 1,
+	UPLOAD = 2,
+	GET_STATUS = 3,
+	CLEAR_STATUS = 4,
+	GET_STATE = 5,
+	ABORT = 6
+};
+
+enum class DfuState : uint8_t {
+	APP_IDLE = 0,
+	APP_DETACH = 1,
+	DFU_IDLE = 2,
+	DFU_DOWNLOAD_SYNC = 3,
+	DFU_DOWNBUSY = 4,
+	DFU_DOWNLOAD_IDLE = 5,
+	DFU_MANIFEST_SYNC = 6,
+	DFU_MANIFEST = 7,
+	DFU_MANIFEST_WAIT_RESET = 8,
+	DFU_UPLOAD_IDLE = 9,
+	DFU_ERROR = 10
+};
+
+enum class DfuStatus : uint8_t {
+	OK = 0x0,
+	ERR_TARGET = 0x1,
+	ERR_FILE = 0x2,
+	ERR_WRITE = 0x3,
+	ERR_ERASE = 0x4,
+	ERR_CHECK_ERASED = 0x5,
+	ERR_PROG = 0x6,
+	ERR_VERIFY = 0x7,
+	ERR_ADDRESS = 0x8,
+	ERR_NOTDONE = 0x9,
+	ERR_FIRMWARE = 0xA,
+	ERR_VENDOR = 0xB,
+	ERR_USBR = 0xC,
+	ERR_POR = 0xD,
+	ERR_UNKNOWN = 0xE,
+	ERR_STALLEDPKT = 0xF
+};
 
 #define U1_DFU_VENDORID    0x1d50
 #define U1_DFU_PRODUCTID   0x6003
@@ -118,5 +128,5 @@ static const uint32_t crc_table[] = {
 
 #define BOOTLOADER_OFFSET 0x0
 #define BOOTLOADER_SIZE 0x4000
-#define BLOCK_SIZE (1<<8)
+#define BLOCK_SIZE 0x100
 #define SECTOR_SIZE (1<<12)

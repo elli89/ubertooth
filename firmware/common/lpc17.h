@@ -33,7 +33,7 @@
 #define __LPC17_H
 
 #include <stdint.h>
- 
+
 #define LPC17_REG(a)   (*(volatile uint32_t *)(a))
 #define LPC17_REG8(a)  (*(volatile uint8_t *)(a))
 #define LPC17_REG16(a) (*(volatile uint16_t *)(a))
@@ -1191,7 +1191,7 @@
  *
  * Receive Descriptor Base Address register (RxDescriptor - 0x5000 0108)
  * Receive Status Base Address register (RxStatus - 0x5000 010C)
- * Receive Number of Descriptors register (RxDescriptor - 0x5000 0110) 
+ * Receive Number of Descriptors register (RxDescriptor - 0x5000 0110)
  * Receive Produce Index register (RxProduceIndex - 0x5000 0114)
  * Receive Consume Index register (RxConsumeIndex - 0x5000 0118)
  * Transmit Descriptor Base Address register (TxDescriptor - 0x5000 011C)

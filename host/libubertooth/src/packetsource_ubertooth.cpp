@@ -1,10 +1,11 @@
-#include <chrono>
-
 #include "packetsource_ubertooth.h"
-#include "ubertooth_control.h"
-#include <iostream> // FIXME
+#include <iostream>
 #include <pthread.h>
 #include <unistd.h>
+
+constexpr const uint16_t TIMEOUT  = 20000;
+constexpr const uint8_t  DATA_IN  = (0x82 | LIBUSB_ENDPOINT_IN);
+// constexpr const uint8_t  DATA_OUT = (0x05 | LIBUSB_ENDPOINT_OUT);
 
 bool PacketsourceUbertooth::exit_thread;
 pthread_t PacketsourceUbertooth::poll_thread;
@@ -47,7 +48,7 @@ PacketsourceUbertooth::~PacketsourceUbertooth()
 	stop();
 }
 
-usb_pkt_rx* buffer;
+usb_pkt_rx PacketsourceUbertooth::buffer;
 
 void PacketsourceUbertooth::cb_xfer(struct libusb_transfer* xfer)
 {
@@ -59,7 +60,7 @@ void PacketsourceUbertooth::cb_xfer(struct libusb_transfer* xfer)
 		if(xfer->status == LIBUSB_TRANSFER_TIMED_OUT) {
 			r = libusb_submit_transfer(xfer);
 			if (r < 0)
-				std::cerr << "Failed to submit USB transfer (" << r << ")" << std::endl;
+				std::cerr << "Failed to submit USB transfer (" << libusb_strerror((libusb_error)r) << ")" << std::endl;
 			return;
 		}
 		libusb_free_transfer(xfer);
@@ -67,38 +68,37 @@ void PacketsourceUbertooth::cb_xfer(struct libusb_transfer* xfer)
 		return;
 	}
 
+	bulk->fifo.push(buffer);
+
 	if(bulk->stop_transfer)
 		return;
 
-	bulk->fifo.push(*buffer);
-
 	r = libusb_submit_transfer(xfer);
 	if (r < 0)
-		std::cerr << "Failed to submit USB transfer (" << r << ")" << std::endl;
+		std::cerr << "Failed to submit USB transfer (" << libusb_strerror((libusb_error)r) << ")" << std::endl;
 }
 
 void PacketsourceUbertooth::start()
 {
 	stop_transfer = false;
+	thread_start();
 
 	rx_xfer = libusb_alloc_transfer(0);
-	libusb_fill_bulk_transfer(rx_xfer, devh, DATA_IN, (uint8_t*)buffer, PKT_LEN, cb_xfer, this, TIMEOUT);
+	libusb_fill_bulk_transfer(rx_xfer, devh, DATA_IN, (uint8_t*)(&buffer), PKT_LEN, cb_xfer, this, TIMEOUT);
 
 	int r = libusb_submit_transfer(rx_xfer);
 	if (r < 0) {
-		std::cerr << "rx_xfer submission: " << r << std::endl;
+		std::cerr << "Failed to submit USB transfer (" << libusb_strerror((libusb_error)r) << ")" << std::endl;
 	}
-
-	thread_start();
 }
 
 void PacketsourceUbertooth::stop()
 {
 	stop_transfer = true;
 
-	if(rx_xfer != NULL)
+	if(rx_xfer != NULL) {
 		libusb_cancel_transfer(rx_xfer);
-
+	}
 	thread_stop();
 }
 
@@ -109,6 +109,7 @@ usb_pkt_rx PacketsourceUbertooth::receive()
 
 	usb_pkt_rx pkt;
 	if (!fifo.empty()) {
+		std::cout << fifo.size() << std::endl;
 		pkt = fifo.front();
 		fifo.pop();
 	}

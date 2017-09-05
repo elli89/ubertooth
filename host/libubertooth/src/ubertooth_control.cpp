@@ -19,20 +19,26 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <string.h>
-#include <btbb.h>
 #include <iostream>
+#include <cstring>
+#include <btbb.h>
+#include "basic_ubertooth.h"
 #include "ubertooth.h"
+#include "dfu_ubertooth.h"
 
-#define CTRL_IN     (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN)
-#define CTRL_OUT    (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT)
+constexpr const uint8_t CTRL_IN  = (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN);
+constexpr const uint8_t CTRL_OUT = (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT);
 
-void Ubertooth::show_libusb_error(int error_code)
+constexpr const uint8_t DFU_IN   = LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE;
+constexpr const uint8_t DFU_OUT = LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE;
+
+
+void BasicUbertooth::show_libusb_error(int error_code)
 {
 	std::cerr << "libUSB Error: " << libusb_error_name(error_code) << ": " << libusb_strerror((libusb_error)error_code) << " (" << error_code << ")" << std::endl;
 }
 
-void Ubertooth::cmd_callback(struct libusb_transfer* transfer)
+void BasicUbertooth::cmd_callback(struct libusb_transfer* transfer)
 {
 	if(transfer->status != 0) {
 		show_libusb_error(transfer->status);
@@ -47,7 +53,7 @@ void Ubertooth::cmd_trim_clock(uint16_t offset)
 		(uint8_t)((offset >> 0) & 0xff)
 	};
 
-	cmd_async(CTRL_OUT, UbertoothCommand::TRIM_CLOCK, 0, 0, data, 2);
+	cmd_async(CTRL_OUT, (uint8_t)UbertoothCommand::TRIM_CLOCK, 0, 0, data, 2);
 }
 
 void Ubertooth::cmd_fix_clock_drift(int16_t ppm)
@@ -57,70 +63,70 @@ void Ubertooth::cmd_fix_clock_drift(int16_t ppm)
 		(uint8_t)((ppm >> 0) & 0xff)
 	};
 
-	cmd_async(CTRL_OUT, UbertoothCommand::FIX_CLOCK_DRIFT, 0, 0, data, 2);
+	cmd_async(CTRL_OUT, (uint8_t)UbertoothCommand::FIX_CLOCK_DRIFT, 0, 0, data, 2);
 }
 
 int Ubertooth::cmd_ping()
 {
-	return cmd_sync(CTRL_IN, UbertoothCommand::PING, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::PING, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_rx_syms()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::RX_SYMBOLS, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::RX_SYMBOLS, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_tx_syms()
 {
-	return cmd_async(CTRL_OUT, UbertoothCommand::TX_SYMBOLS, 0, 0, NULL, 0);
+	return cmd_async(CTRL_OUT, (uint8_t)UbertoothCommand::TX_SYMBOLS, 0, 0, NULL, 0);
 }
 
 int Ubertooth::cmd_specan(uint16_t low_freq, uint16_t high_freq)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SPECAN, low_freq, high_freq, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SPECAN, low_freq, high_freq, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_led_specan(uint16_t rssi_threshold)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::LED_SPECAN, rssi_threshold, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::LED_SPECAN, rssi_threshold, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_set_usrled(uint16_t state)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_USRLED, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_USRLED, state, 0, NULL, 0, 1000);
 }
 
 uint8_t Ubertooth::cmd_get_usrled()
 {
 	uint8_t state;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_USRLED, 0, 0, &state, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_USRLED, 0, 0, &state, 1, 1000);
 	return state;
 }
 
 int Ubertooth::cmd_set_rxled(uint16_t state)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_RXLED, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_RXLED, state, 0, NULL, 0, 1000);
 }
 
 uint8_t Ubertooth::cmd_get_rxled()
 {
 	uint8_t state;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_RXLED, 0, 0, &state, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_RXLED, 0, 0, &state, 1, 1000);
 	return state;
 }
 
 int Ubertooth::cmd_set_txled(uint16_t state)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_TXLED, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_TXLED, state, 0, NULL, 0, 1000);
 }
 
 uint8_t Ubertooth::cmd_get_txled()
 {
 	uint8_t state;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_TXLED, 0, 0, &state, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_TXLED, 0, 0, &state, 1, 1000);
 	return state;
 }
 
@@ -128,7 +134,7 @@ uint8_t Ubertooth::cmd_get_modulation()
 {
 	uint8_t modulation;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_MOD, 0, 0, &modulation, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_MOD, 0, 0, &modulation, 1, 1000);
 	return modulation;
 }
 
@@ -136,7 +142,7 @@ uint16_t Ubertooth::cmd_get_channel()
 {
 	uint8_t result[2];
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_CHANNEL, 0, 0, result, 2, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_CHANNEL, 0, 0, result, 2, 1000);
 
 	return result[0] | (result[1] << 8);
 }
@@ -144,14 +150,14 @@ uint16_t Ubertooth::cmd_get_channel()
 
 int Ubertooth::cmd_set_channel(uint16_t channel)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_CHANNEL, channel, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_CHANNEL, channel, 0, NULL, 0, 1000);
 }
 
 uint32_t Ubertooth::cmd_get_partnum()
 {
 	uint8_t result[5];
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_PARTNUM, 0, 0, result, 5, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_PARTNUM, 0, 0, result, 5, 1000);
 
 	if (result[0] != 0) {
 		std::cerr <<  "result not zero: " << result[0] << std::endl;
@@ -162,7 +168,7 @@ uint32_t Ubertooth::cmd_get_partnum()
 
 void Ubertooth::cmd_get_serial(uint8_t* serial)
 {
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_SERIAL, 0, 0, serial, 17, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_SERIAL, 0, 0, serial, 17, 1000);
 
 	if (serial[0] != 0) {
 		std::cerr << "result not zero: " << serial[0] << std::endl;
@@ -171,62 +177,62 @@ void Ubertooth::cmd_get_serial(uint8_t* serial)
 
 int Ubertooth::cmd_set_modulation(Modulation mod)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_MOD, (uint16_t)mod, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_MOD, (uint16_t)mod, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_set_isp()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_ISP, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_ISP, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_reset()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::RESET, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::RESET, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_stop()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::STOP, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::STOP, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_set_paen(uint16_t state)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_PAEN, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_PAEN, state, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_set_hgm(uint16_t state)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_HGM, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_HGM, state, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_tx_test()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::TX_TEST, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::TX_TEST, 0, 0, NULL, 0, 1000);
 }
 
-int Ubertooth::cmd_flash()
+int BasicUbertooth::cmd_flash()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::FLASH, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::FLASH, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_get_palevel()
 {
 	uint8_t level;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_PALEVEL, 0, 0, &level, 1, 3000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_PALEVEL, 0, 0, &level, 1, 3000);
 	return level;
 }
 
 int Ubertooth::cmd_set_palevel(uint16_t level)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_PALEVEL, level, 0, NULL, 0, 3000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_PALEVEL, level, 0, NULL, 0, 3000);
 }
 
 int Ubertooth::cmd_get_rangeresult(rangetest_result *rr)
 {
 	uint8_t result[5];
 
-	int r = cmd_sync(CTRL_IN, UbertoothCommand::RANGE_CHECK, 0, 0, result, sizeof(result), 3000);
+	int r = cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::RANGE_CHECK, 0, 0, result, sizeof(result), 3000);
 	if (r < LIBUSB_SUCCESS) {
 		return r;
 	}
@@ -242,12 +248,12 @@ int Ubertooth::cmd_get_rangeresult(rangetest_result *rr)
 
 int Ubertooth::cmd_range_test()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::RANGE_TEST, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::RANGE_TEST, 0, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_repeater()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::REPEATER, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::REPEATER, 0, 0, NULL, 0, 1000);
 }
 
 void Ubertooth::cmd_get_rev_num(char* version, size_t len)
@@ -255,7 +261,7 @@ void Ubertooth::cmd_get_rev_num(char* version, size_t len)
 	uint8_t result[2 + 1 + 255];
 	uint16_t result_ver;
 	int r;
-	r = cmd_sync(CTRL_IN, UbertoothCommand::GET_REV_NUM, 0, 0,
+	r = cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_REV_NUM, 0, 0,
 			result, sizeof(result), 1000);
 	if (r == LIBUSB_ERROR_PIPE) {
 		fprintf(stderr, "control message unsupported\n");
@@ -283,7 +289,7 @@ void Ubertooth::cmd_get_compile_info(char* compile_info, size_t len)
 {
 	uint8_t result[1 + 255];
 	int r;
-	r = cmd_sync(CTRL_IN, UbertoothCommand::GET_COMPILE_INFO, 0, 0,
+	r = cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_COMPILE_INFO, 0, 0,
 			result, sizeof(result), 1000);
 	if (r == LIBUSB_ERROR_PIPE) {
 		fprintf(stderr, "control message unsupported\n");
@@ -306,21 +312,21 @@ uint8_t Ubertooth::cmd_get_board_id()
 {
 	uint8_t board_id;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_BOARD_ID, 0, 0, &board_id, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_BOARD_ID, 0, 0, &board_id, 1, 1000);
 
 	return board_id;
 }
 
 int Ubertooth::cmd_set_squelch(uint16_t level)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_SQUELCH, level, 0, NULL, 0, 3000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_SQUELCH, level, 0, NULL, 0, 3000);
 }
 
 int Ubertooth::cmd_get_squelch()
 {
 	uint8_t level;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_SQUELCH, 0, 0, &level, 1, 3000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_SQUELCH, 0, 0, &level, 1, 3000);
 
 	return level;
 }
@@ -337,7 +343,7 @@ int Ubertooth::cmd_set_bdaddr(uint64_t address)
 	for(int r=0; r < 8; r++)
 		data[r+8] = (syncword >> (8*r)) & 0xff;
 
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_BDADDR, 0, 0, data, sizeof(data), 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_BDADDR, 0, 0, data, sizeof(data), 1000);
 }
 
 int Ubertooth::cmd_start_hopping(int clkn_offset, int clk100ns_offset)
@@ -350,7 +356,7 @@ int Ubertooth::cmd_start_hopping(int clkn_offset, int clk100ns_offset)
 	data[4] = (clk100ns_offset >> 8) & 0xff;
 	data[5] = (clk100ns_offset >> 0) & 0xff;
 
-	return cmd_async(CTRL_OUT, UbertoothCommand::START_HOPPING, 0, 0, data, 6);
+	return cmd_async(CTRL_OUT, (uint8_t)UbertoothCommand::START_HOPPING, 0, 0, data, 6);
 }
 
 int Ubertooth::cmd_set_clock(uint32_t clkn)
@@ -360,7 +366,7 @@ int Ubertooth::cmd_set_clock(uint32_t clkn)
 	for(int r=0; r < 4; r++)
 		data[r] = (clkn >> (8*r)) & 0xff;
 
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_CLOCK, 0, 0, data, 4, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_CLOCK, 0, 0, data, 4, 1000);
 }
 
 uint32_t Ubertooth::cmd_get_clock()
@@ -368,7 +374,7 @@ uint32_t Ubertooth::cmd_get_clock()
 	uint32_t clock = 0;
 	unsigned char data[4];
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_CLOCK, 0, 0, data, 4, 3000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_CLOCK, 0, 0, data, 4, 3000);
 
 	clock = data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24;
 
@@ -377,17 +383,17 @@ uint32_t Ubertooth::cmd_get_clock()
 
 int Ubertooth::cmd_btle_sniffing(uint16_t num)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::BTLE_SNIFFING, num, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::BTLE_SNIFFING, num, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_set_afh_map(uint8_t* afh_map)
 {
-	return cmd_async(CTRL_OUT, UbertoothCommand::SET_AFHMAP, 0, 0, afh_map, 10);
+	return cmd_async(CTRL_OUT, (uint8_t)UbertoothCommand::SET_AFHMAP, 0, 0, afh_map, 10);
 }
 
 int Ubertooth::cmd_clear_afh_map()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::CLEAR_AFHMAP, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::CLEAR_AFHMAP, 0, 0, NULL, 0, 1000);
 }
 
 uint32_t Ubertooth::cmd_get_access_address()
@@ -395,7 +401,7 @@ uint32_t Ubertooth::cmd_get_access_address()
 	uint32_t access_address = 0;
 	unsigned char data[4];
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_ACCESS_ADDRESS, 0, 0, data, 4, 3000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_ACCESS_ADDRESS, 0, 0, data, 4, 3000);
 
 	access_address = data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24;
 	return access_address;
@@ -407,91 +413,132 @@ int Ubertooth::cmd_set_access_address(uint32_t access_address)
 	for(int i=0; i < 4; i++)
 		data[i] = (access_address >> (8*i)) & 0xff;
 
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_ACCESS_ADDRESS, 0, 0, data, 4, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_ACCESS_ADDRESS, 0, 0, data, 4, 1000);
 }
 
 int Ubertooth::cmd_do_something(uint8_t* data, size_t len)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::DO_SOMETHING, 0, 0, data, len, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::DO_SOMETHING, 0, 0, data, len, 1000);
 }
 
 int Ubertooth::cmd_do_something_reply(uint8_t* data, size_t len)
 {
-	return cmd_sync(CTRL_IN, UbertoothCommand::DO_SOMETHING_REPLY, 0, 0, data, len, 3000);
+	return cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::DO_SOMETHING_REPLY, 0, 0, data, len, 3000);
 }
 
 uint8_t Ubertooth::cmd_get_crc_verify()
 {
 	uint8_t verify;
 
-	cmd_sync(CTRL_IN, UbertoothCommand::GET_CRC_VERIFY, 0, 0, &verify, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_CRC_VERIFY, 0, 0, &verify, 1, 1000);
 
 	return verify;
 }
 
 int Ubertooth::cmd_set_crc_verify(int verify)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::SET_CRC_VERIFY, verify, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_CRC_VERIFY, verify, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_poll(usb_pkt_rx* p)
 {
-	return cmd_sync(CTRL_IN, UbertoothCommand::POLL, 0, 0, (uint8_t*)p, sizeof(usb_pkt_rx), 1000);
+	return cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::POLL, 0, 0, (uint8_t*)p, sizeof(usb_pkt_rx), 1000);
 }
 
 int Ubertooth::cmd_btle_promisc()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::BTLE_PROMISC, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::BTLE_PROMISC, 0, 0, NULL, 0, 1000);
 }
 
 uint16_t Ubertooth::cmd_read_register(uint8_t reg)
 {
 	uint8_t data[2];
 
-	cmd_sync(CTRL_IN, UbertoothCommand::READ_REGISTER, reg, 0, data, 2, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::READ_REGISTER, reg, 0, data, 2, 1000);
 
 	return (data[0] << 8) | data[1];
 }
 
 int Ubertooth::cmd_btle_slave(uint8_t *mac_address)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::BTLE_SLAVE, 0, 0, mac_address, 6, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::BTLE_SLAVE, 0, 0, mac_address, 6, 1000);
 }
 
 int Ubertooth::cmd_btle_set_target(uint8_t *mac_address)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::BTLE_SET_TARGET, 0, 0, mac_address, 6, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::BTLE_SET_TARGET, 0, 0, mac_address, 6, 1000);
 }
 
 int Ubertooth::cmd_set_jam_mode(int mode)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::JAM_MODE, mode, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::JAM_MODE, mode, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_ego(int mode)
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::EGO, mode, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::EGO, mode, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_afh()
 {
-	return cmd_sync(CTRL_OUT, UbertoothCommand::AFH, 0, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::AFH, 0, 0, NULL, 0, 1000);
 }
 
 void Ubertooth::cmd_hop()
 {
-	cmd_async(CTRL_OUT, UbertoothCommand::HOP, 0, 0, NULL, 0);
+	cmd_async(CTRL_OUT, (uint8_t)UbertoothCommand::HOP, 0, 0, NULL, 0);
 }
 
-int Ubertooth::cmd_sync(uint8_t type,
-             UbertoothCommand command,
-             uint16_t wValue,
-             uint16_t wIndex,
-             uint8_t* data,
-             uint16_t size,
-             unsigned int timeout)
+int DfuUbertooth::cmd_detach()
 {
-	int r = libusb_control_transfer(devh, type, (uint8_t)command, wValue, wIndex, data, size, timeout);
+	return cmd_sync(DFU_OUT, (uint8_t)DfuCommand::DETACH, 0, 0, NULL, 0, 1000);
+}
+
+size_t DfuUbertooth::cmd_download(size_t block, uint8_t* buffer)
+{
+	return cmd_sync(DFU_OUT, (uint8_t)DfuCommand::DOWNLOAD, block+(BOOTLOADER_OFFSET + BOOTLOADER_SIZE) / BLOCK_SIZE, 0, buffer, BLOCK_SIZE, 1000);
+}
+
+size_t DfuUbertooth::cmd_upload(size_t block, uint8_t* buffer)
+{
+	return cmd_sync(DFU_IN, (uint8_t)DfuCommand::UPLOAD, block+(BOOTLOADER_OFFSET + BOOTLOADER_SIZE) / BLOCK_SIZE, 0, buffer, BLOCK_SIZE, 1000);
+}
+
+int DfuUbertooth::cmd_get_status()
+{
+	uint8_t buffer[6];
+
+	cmd_sync(DFU_IN, (uint8_t)DfuCommand::GET_STATUS, 0, 0, buffer, 6, 1000);
+
+	return 0;
+}
+
+int DfuUbertooth::cmd_clear_status()
+{
+	return cmd_sync(DFU_OUT, (uint8_t)DfuCommand::CLEAR_STATUS, 0, 0, NULL, 0, 1000);
+}
+
+uint8_t DfuUbertooth::cmd_get_state()
+{
+	uint8_t state;
+	cmd_sync(DFU_IN, (uint8_t)DfuCommand::GET_STATE, 0, 0, &state, 1, 1000);
+	return state;
+}
+
+int DfuUbertooth::cmd_abort()
+{
+	return cmd_sync(DFU_OUT, (uint8_t)DfuCommand::ABORT, 0, 0, NULL, 0, 1000);
+}
+
+int BasicUbertooth::cmd_sync(uint8_t type,
+                             uint8_t command,
+                             uint16_t wValue,
+                             uint16_t wIndex,
+                             uint8_t* data,
+                             uint16_t size,
+                             unsigned int timeout)
+{
+	int r = libusb_control_transfer(devh, type, command, wValue, wIndex, data, size, timeout);
 	if (r < 0) {
 		if (r == LIBUSB_ERROR_PIPE) {
 			fprintf(stderr, "control message unsupported\n");
@@ -505,20 +552,20 @@ int Ubertooth::cmd_sync(uint8_t type,
 		return r;
 	}
 
-	return 0;
+	return r;
 }
 
-int Ubertooth::cmd_async(uint8_t type,
-                         UbertoothCommand command,
-                         uint16_t wValue,
-                         uint16_t wIndex,
-                         uint8_t* data,
-                         uint16_t size)
+int BasicUbertooth::cmd_async(uint8_t type,
+                              uint8_t command,
+                              uint16_t wValue,
+                              uint16_t wIndex,
+                              uint8_t* data,
+                              uint16_t size)
 {
 	uint8_t buffer[LIBUSB_CONTROL_SETUP_SIZE + size];
 	struct libusb_transfer* xfer = libusb_alloc_transfer(0);
 
-	libusb_fill_control_setup(buffer, type, (uint8_t)command, wValue, wIndex, size);
+	libusb_fill_control_setup(buffer, type, command, wValue, wIndex, size);
 	if(size > 0)
 		memcpy ( &buffer[LIBUSB_CONTROL_SETUP_SIZE], data, size );
 	libusb_fill_control_transfer(xfer, devh, buffer, cmd_callback, NULL, 1000);
