@@ -47,7 +47,7 @@ static void usage(void)
  * representing the symbol determined by the demodulator (GnuRadio style)
  */
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	int opt;
 	int bitstream = 0;
@@ -80,9 +80,25 @@ int main(int argc, char *argv[])
 
 	Ubertooth ut(ubertooth_device);
 
+	uint8_t serial[17];
+	ut.cmd_get_serial(serial);
+	std::cerr << "Serial No: " << std::hex;
+	for(int i=1; i<17; i++)
+		std::cerr << (int)serial[i];
+	std::cerr << std::dec << std::endl;
+
 	// ut.cmd_set_modulation(ut->devh, modulation);
+
+	ut.cmd_rx_syms();
+
 	ut.start();
-	std::cout << "bla" << std::endl;
+	for ( int count =0; count<10; count++) {
+		usb_pkt_rx pkt = ut.receive();
+
+		for(int i=0; i<50; i++)
+			std::cout << pkt.data[i] << " ";
+		std::cout << std::endl;
+	}
 	ut.stop();
 	return 0;
 }

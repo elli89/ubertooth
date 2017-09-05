@@ -28,7 +28,7 @@
 
 #include "packetsource_ubertooth.h"
 
-static struct libusb_device_handle* find_ubertooth_device(int ubertooth_device)
+struct libusb_device_handle* Ubertooth::find_ubertooth_device(int ubertooth_device)
 {
 	struct libusb_context *ctx = NULL;
 	struct libusb_device **usb_list = NULL;
@@ -60,7 +60,7 @@ static struct libusb_device_handle* find_ubertooth_device(int ubertooth_device)
 	else {
 		if (ubertooth_device < 0) {
 			std::cerr << "multiple Ubertooth devices found! Use '-U' to specify device number" << std::endl;
-			uint8_t serial[17], r;
+			uint8_t serial[17];
 			for(i = 0 ; i < ubertooths ; ++i) {
 				libusb_get_device_descriptor(usb_list[ubertooth_devs[i]], &desc);
 				ret = libusb_open(usb_list[ubertooth_devs[i]], &devh);
@@ -69,11 +69,13 @@ static struct libusb_device_handle* find_ubertooth_device(int ubertooth_device)
 					show_libusb_error(ret);
 				}
 				else {
-					r = cmd_get_serial(devh, serial);
-					if(r==0) {
-						std::cerr << "  Device " << i << ": ";
-						print_serial(serial);
-					}
+					cmd_get_serial(serial);
+
+					std::cerr << "Serial No: ";
+					for(int i=1; i<17; i++)
+						std::cerr << serial[i];
+					std::cerr << std::endl;
+
 					libusb_close(devh);
 				}
 			}
@@ -116,7 +118,7 @@ Ubertooth::~Ubertooth()
 	delete source;
 
 	if (devh != NULL) {
-		cmd_stop(devh);
+		cmd_stop();
 		libusb_release_interface(devh, 0);
 	}
 	libusb_close(devh);

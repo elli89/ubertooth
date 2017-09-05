@@ -22,7 +22,9 @@
 #ifndef __UBERTOOTH_H__
 #define __UBERTOOTH_H__
 
-#include "ubertooth_control.h"
+#include "ubertooth_interface.h"
+#include <stdlib.h>
+#include <libusb-1.0/libusb.h>
 #include "packetsource.h"
 #include <btbb.h>
 
@@ -43,6 +45,8 @@ private:
 	btbb_pcapng_handle* h_pcapng_bredr = NULL;
 	lell_pcapng_handle* h_pcapng_le = NULL;
 
+	struct libusb_device_handle* find_ubertooth_device(int ubertooth_device);
+
 public:
 	Ubertooth();
 	Ubertooth(int ubertooth_device);
@@ -53,6 +57,87 @@ public:
 	void start();
 	void stop();
 	usb_pkt_rx receive();
+
+protected:
+
+	static void show_libusb_error(int error_code);
+	static void cmd_callback(struct libusb_transfer* transfer);
+	int cmd_sync(uint8_t type,
+	             Command command,
+	             uint16_t wValue,
+	             uint16_t wIndex,
+	             uint8_t* data,
+	             uint16_t size,
+	             unsigned int timeout);
+	int cmd_async(uint8_t type,
+	              Command command,
+	              uint16_t wValue,
+	              uint16_t wIndex,
+	              uint8_t* data,
+	              uint16_t size);
+
+public:
+	void cmd_trim_clock(uint16_t offset);
+	void cmd_fix_clock_drift(int16_t ppm);
+	int cmd_ping();
+	int cmd_rx_syms();
+	int cmd_tx_syms();
+	int cmd_specan(uint16_t low_freq, uint16_t high_freq);
+	int cmd_led_specan(uint16_t rssi_threshold);
+	int cmd_set_usrled(uint16_t state);
+	uint8_t cmd_get_usrled();
+	int cmd_set_rxled(uint16_t state);
+	uint8_t cmd_get_rxled();
+	int cmd_set_txled(uint16_t state);
+	uint8_t cmd_get_txled();
+	uint32_t cmd_get_partnum();
+	void cmd_get_serial(uint8_t* serial);
+	int cmd_set_modulation(uint16_t mod);
+	uint8_t cmd_get_modulation();
+	int cmd_set_isp();
+	int cmd_reset();
+	int cmd_stop();
+	int cmd_set_paen(uint16_t state);
+	int cmd_set_hgm(uint16_t state);
+	int cmd_tx_test();
+	int cmd_flash();
+	int cmd_get_palevel();
+	int cmd_set_palevel(uint16_t level);
+	uint16_t cmd_get_channel();
+	int cmd_set_channel(uint16_t channel);
+	int cmd_get_rangeresult(rangetest_result* rr);
+	int cmd_range_test();
+	int cmd_repeater();
+	void cmd_get_rev_num(char* version, size_t len);
+	void cmd_get_compile_info(char* compile_info, size_t len);
+	uint8_t cmd_get_board_id();
+	int cmd_set_squelch(uint16_t level);
+	int cmd_get_squelch();
+	int cmd_set_bdaddr(uint64_t bdaddr);
+	int cmd_set_syncword(uint64_t syncword);
+	int cmd_next_hop(uint16_t clk);
+	int cmd_start_hopping(int clkn_offset, int clk100ns_offset);
+	int cmd_set_clock(uint32_t clkn);
+	uint32_t cmd_get_clock();
+	int cmd_set_afh_map(uint8_t* afh_map);
+	int cmd_clear_afh_map();
+	int cmd_btle_sniffing(uint16_t num);
+	uint32_t cmd_get_access_address();
+	int cmd_set_access_address(uint32_t access_address);
+	int cmd_do_something(uint8_t* data, size_t len);
+	int cmd_do_something_reply(uint8_t* data, size_t len);
+	uint8_t cmd_get_crc_verify();
+	int cmd_set_crc_verify(int verify);
+	int cmd_poll(usb_pkt_rx* p);
+	int cmd_btle_promisc();
+	uint16_t cmd_read_register(uint8_t reg);
+	int cmd_btle_slave(uint8_t* mac_address);
+	int cmd_btle_set_target(uint8_t* mac_address);
+	int cmd_set_jam_mode(int mode);
+	int cmd_ego(int mode);
+	int cmd_afh();
+	void cmd_hop();
+
 };
 
 #endif /* __UBERTOOTH_H__ */
