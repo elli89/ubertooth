@@ -91,42 +91,42 @@ int Ubertooth::cmd_led_specan(uint16_t rssi_threshold)
 	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::LED_SPECAN, rssi_threshold, 0, NULL, 0, 1000);
 }
 
-int Ubertooth::cmd_set_usrled(uint16_t state)
+int Ubertooth::cmd_set_usrled(bool state)
 {
-	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_USRLED, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_USRLED, (uint16_t)state, 0, NULL, 0, 1000);
 }
 
-uint8_t Ubertooth::cmd_get_usrled()
+bool Ubertooth::cmd_get_usrled()
 {
-	uint8_t state;
+	bool state;
 
-	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_USRLED, 0, 0, &state, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_USRLED, 0, 0, (uint8_t*)&state, 1, 1000);
 	return state;
 }
 
-int Ubertooth::cmd_set_rxled(uint16_t state)
+int Ubertooth::cmd_set_rxled(bool state)
 {
-	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_RXLED, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_RXLED, (uint16_t)state, 0, NULL, 0, 1000);
 }
 
-uint8_t Ubertooth::cmd_get_rxled()
+bool Ubertooth::cmd_get_rxled()
 {
-	uint8_t state;
+	bool state;
 
-	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_RXLED, 0, 0, &state, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_RXLED, 0, 0, (uint8_t*)&state, 1, 1000);
 	return state;
 }
 
-int Ubertooth::cmd_set_txled(uint16_t state)
+int Ubertooth::cmd_set_txled(bool state)
 {
-	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_TXLED, state, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, (uint8_t)UbertoothCommand::SET_TXLED, (uint16_t)state, 0, NULL, 0, 1000);
 }
 
-uint8_t Ubertooth::cmd_get_txled()
+bool Ubertooth::cmd_get_txled()
 {
-	uint8_t state;
+	bool state;
 
-	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_TXLED, 0, 0, &state, 1, 1000);
+	cmd_sync(CTRL_IN, (uint8_t)UbertoothCommand::GET_TXLED, 0, 0, (uint8_t*)&state, 1, 1000);
 	return state;
 }
 

@@ -28,11 +28,13 @@
 
 void Ubertooth::start()
 {
+	stop_ubertooth = false;
 	source->start();
 }
 
 void Ubertooth::stop()
 {
+	stop_ubertooth = true;
 	source->stop();
 	cmd_stop();
 }

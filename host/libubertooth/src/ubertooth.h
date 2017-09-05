@@ -41,6 +41,8 @@ protected:
 	btbb_pcapng_handle* h_pcapng_bredr = NULL;
 	lell_pcapng_handle* h_pcapng_le = NULL;
 
+	bool stop_ubertooth = true;
+
 public:
 	Ubertooth();
 	Ubertooth(int ubertooth_device);
@@ -51,6 +53,8 @@ public:
 	void stop();
 	usb_pkt_rx receive();
 
+	bool isRunning() {return !stop_ubertooth;}
+
 public:
 	void cmd_trim_clock(uint16_t offset);
 	void cmd_fix_clock_drift(int16_t ppm);
@@ -59,12 +63,12 @@ public:
 	int cmd_tx_syms();
 	int cmd_specan(uint16_t low_freq, uint16_t high_freq);
 	int cmd_led_specan(uint16_t rssi_threshold);
-	int cmd_set_usrled(uint16_t state);
-	uint8_t cmd_get_usrled();
-	int cmd_set_rxled(uint16_t state);
-	uint8_t cmd_get_rxled();
-	int cmd_set_txled(uint16_t state);
-	uint8_t cmd_get_txled();
+	int cmd_set_usrled(bool state);
+	bool cmd_get_usrled();
+	int cmd_set_rxled(bool state);
+	bool cmd_get_rxled();
+	int cmd_set_txled(bool state);
+	bool cmd_get_txled();
 	uint32_t cmd_get_partnum();
 	void cmd_get_serial(uint8_t* serial);
 	int cmd_set_modulation(Modulation mod);

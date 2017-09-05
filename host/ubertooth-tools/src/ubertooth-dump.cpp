@@ -25,6 +25,14 @@
 #include <stdio.h>
 #include <iostream>
 #include <iomanip>
+#include <signal.h>
+
+Ubertooth* stopdevice;
+static void cleanup(int sig __attribute__((unused)))
+{
+	stopdevice->stop();
+}
+
 
 static void usage(void)
 {
@@ -80,13 +88,17 @@ int main(int argc, char* argv[])
 
 
 	Ubertooth ut(ubertooth_device);
+	stopdevice = &ut;
+	signal(SIGINT, cleanup);
+	signal(SIGQUIT, cleanup);
+	signal(SIGTERM, cleanup);
 
 	ut.cmd_set_modulation(mod);
 
 	ut.cmd_rx_syms();
 
 	ut.start();
-	for ( int count =0; count<10; count++) {
+	while (ut.isRunning()) {
 		usb_pkt_rx pkt = ut.receive();
 
 		for(int i=0; i<DMA_SIZE; i++)
