@@ -2,6 +2,40 @@
 
 #include "packetsource_ubertooth.h"
 #include "ubertooth_control.h"
+#include <iostream> // FIXME
+#include <pthread.h>
+#include <unistd.h>
+
+volatile bool exit_thread;
+pthread_t poll_thread;
+
+void* poll(void* arg __attribute__((unused)))
+{
+	while (!exit_thread) {
+		struct timeval tv = { 1, 0 };
+		if ( libusb_handle_events_timeout(NULL, &tv) < 0 ) {
+			exit_thread = true;
+			break;
+		}
+		usleep(1);
+	}
+	return NULL;
+}
+
+void thread_start()
+{
+	exit_thread = false;
+
+	pthread_create(&poll_thread, NULL, poll, NULL);
+}
+
+void thread_stop()
+{
+	exit_thread = true;
+
+	pthread_join(poll_thread, NULL);
+	std::cout << "blu" << std::endl;
+}
 
 PacketsourceUbertooth::PacketsourceUbertooth(libusb_device_handle* devh)
 {
@@ -12,8 +46,6 @@ PacketsourceUbertooth::PacketsourceUbertooth(libusb_device_handle* devh)
 PacketsourceUbertooth::~PacketsourceUbertooth()
 {
 	stop();
-
-	delete poll_thread;
 }
 
 usb_pkt_rx* buffer;
@@ -28,7 +60,7 @@ void PacketsourceUbertooth::cb_xfer(struct libusb_transfer* xfer)
 		if(xfer->status == LIBUSB_TRANSFER_TIMED_OUT) {
 			r = libusb_submit_transfer(xfer);
 			if (r < 0)
-				fprintf(stderr, "Failed to submit USB transfer (%d)\n", r);
+				std::cerr << "Failed to submit USB transfer (" << r << ")" << std::endl;
 			return;
 		}
 		libusb_free_transfer(xfer);
@@ -43,7 +75,7 @@ void PacketsourceUbertooth::cb_xfer(struct libusb_transfer* xfer)
 
 	r = libusb_submit_transfer(xfer);
 	if (r < 0)
-		fprintf(stderr, "Failed to submit USB transfer (%d)\n", r);
+		std::cerr << "Failed to submit USB transfer (" << r << ")" << std::endl;
 }
 
 void PacketsourceUbertooth::start()
@@ -55,10 +87,10 @@ void PacketsourceUbertooth::start()
 
 	int r = libusb_submit_transfer(rx_xfer);
 	if (r < 0) {
-		fprintf(stderr, "rx_xfer submission: %d\n", r);
+		std::cerr << "rx_xfer submission: " << r << std::endl;
 	}
 
-	PacketsourceUbertooth::thread_start();
+	thread_start();
 }
 
 void PacketsourceUbertooth::stop()
@@ -68,43 +100,19 @@ void PacketsourceUbertooth::stop()
 	if(rx_xfer != NULL)
 		libusb_cancel_transfer(rx_xfer);
 
-	PacketsourceUbertooth::exit_thread = true;
-	PacketsourceUbertooth::thread_stop();
+	thread_stop();
 }
 
 usb_pkt_rx PacketsourceUbertooth::receive()
 {
 	while (fifo.empty() && !stop_transfer)
-		std::this_thread::sleep_for(std::chrono::microseconds(1));
+		usleep(1);
 
 	// FIXME handle empty fifo
-	usb_pkt_rx pkt = fifo.front();
-	fifo.pop();
-	return pkt;
-}
-
-void PacketsourceUbertooth::thread_start()
-{
-	exit_thread = false;
-
-	PacketsourceUbertooth::poll_thread = new std::thread(PacketsourceUbertooth::poll);
-}
-
-void PacketsourceUbertooth::thread_stop()
-{
-	PacketsourceUbertooth::exit_thread = true;
-
-	PacketsourceUbertooth::poll_thread->join();
-}
-
-void PacketsourceUbertooth::poll()
-{
-	while (!PacketsourceUbertooth::exit_thread) {
-		struct timeval tv = { 1, 0 };
-		if ( libusb_handle_events_timeout(NULL, &tv) < 0 ) {
-			PacketsourceUbertooth::exit_thread = true;
-			break;
-		}
-		std::this_thread::sleep_for(std::chrono::microseconds(1));
+	usb_pkt_rx pkt;
+	if (!fifo.empty()) {
+		pkt = fifo.front();
+		fifo.pop();
 	}
+	return pkt;
 }

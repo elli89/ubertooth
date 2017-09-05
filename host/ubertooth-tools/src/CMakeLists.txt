@@ -59,7 +59,8 @@ if(USE_OWN_GNU_GETOPT)
 	LIST(APPEND TOOLS_LINK_LIBS libgetopt_static)
 endif(USE_OWN_GNU_GETOPT)
 
-LIST(APPEND TOOLS ubertooth-rx ubertooth-tx ubertooth-dump ubertooth-util ubertooth-btle ubertooth-dfu ubertooth-specan ubertooth-ego ubertooth-afh)
+# LIST(APPEND TOOLS ubertooth-rx ubertooth-tx ubertooth-dump ubertooth-util ubertooth-btle ubertooth-dfu ubertooth-specan ubertooth-ego ubertooth-afh)
+LIST(APPEND TOOLS ubertooth-dump)
 
 if( USE_BLUEZ AND NOT ${LIBBLUETOOTH_FOUND} )
 	message( FATAL_ERROR
@@ -67,18 +68,17 @@ if( USE_BLUEZ AND NOT ${LIBBLUETOOTH_FOUND} )
 endif()
 
 if ( ${LIBBLUETOOTH_FOUND} )
-	LIST(APPEND TOOLS ubertooth-follow ubertooth-scan)
 	include_directories(${LIBBLUETOOTH_INCLUDE_DIR})
 	LIST(APPEND TOOLS_LINK_LIBS ${LIBBLUETOOTH_LIBRARIES})
 endif()
 
 foreach(tool ${TOOLS})
-	add_executable(${tool} ${tool}.c)
+	add_executable(${tool} ${tool}.cpp)
 	target_link_libraries(${tool} ${TOOLS_LINK_LIBS})
 	install(TARGETS ${tool} RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
 endforeach(tool)
 
 # ubertooth-debug is special because of the extra source file
-add_executable(ubertooth-debug ubertooth-debug.c cc2400.c arglist.c)
-install(TARGETS ubertooth-debug RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
-target_link_libraries(ubertooth-debug ${TOOLS_LINK_LIBS})
+# add_executable(ubertooth-debug ubertooth-debug.c cc2400.c arglist.c)
+# install(TARGETS ubertooth-debug RUNTIME DESTINATION ${INSTALL_DEFAULT_BINDIR})
+# target_link_libraries(ubertooth-debug ${TOOLS_LINK_LIBS})

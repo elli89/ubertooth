@@ -21,7 +21,7 @@
 
 # Based heavily upon the hackrf cmake setup.
 
-project(libubertooth C)
+project(libubertooth CXX)
 set(PACKAGE libubertooth)
 
 add_subdirectory(src)

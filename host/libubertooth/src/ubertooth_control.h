@@ -54,7 +54,7 @@ int cmd_get_rxled(struct libusb_device_handle* devh);
 int cmd_set_txled(struct libusb_device_handle* devh, uint16_t state);
 int cmd_get_txled(struct libusb_device_handle* devh);
 int cmd_get_partnum(struct libusb_device_handle* devh);
-void print_serial(uint8_t *serial, FILE *fileptr);
+void print_serial(uint8_t *serial);
 int cmd_get_serial(struct libusb_device_handle* devh, uint8_t *serial);
 int cmd_set_modulation(struct libusb_device_handle* devh, uint16_t mod);
 int cmd_get_modulation(struct libusb_device_handle* devh);

@@ -198,16 +198,12 @@ int cmd_get_partnum(struct libusb_device_handle* devh)
 	return result[1] | (result[2] << 8) | (result[3] << 16) | (result[4] << 24);
 }
 
-void print_serial(uint8_t *serial, FILE *fileptr)
+void print_serial(uint8_t *serial)
 {
-	int i;
-	if(fileptr == NULL)
-		fileptr = stdout;
-
-	fprintf(fileptr, "Serial No: ");
-	for(i=1; i<17; i++)
-		fprintf(fileptr, "%02x", serial[i]);
-	fprintf(fileptr, "\n");
+	std::cerr << "Serial No: ";
+	for(int i=1; i<17; i++)
+		std::cerr << serial[i];
+	std::cerr << std::endl;
 }
 
 int cmd_get_serial(struct libusb_device_handle* devh, uint8_t *serial)

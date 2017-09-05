@@ -29,19 +29,19 @@
 class Ubertooth
 {
 private:
-	Packetsource* source;
+	Packetsource* source = NULL;
 
-	struct libusb_device_handle* devh;
+	struct libusb_device_handle* devh = NULL;
 
-	uint64_t abs_start_ns;
-	uint32_t start_clk100ns;
-	uint64_t last_clk100ns;
-	uint64_t clk100ns_upper;
+	uint64_t abs_start_ns   = 0;
+	uint32_t start_clk100ns = 0;
+	uint64_t last_clk100ns  = 0;
+	uint64_t clk100ns_upper = 0;
 
-	btbb_pcap_handle* h_pcap_bredr;
-	lell_pcap_handle* h_pcap_le;
-	btbb_pcapng_handle* h_pcapng_bredr;
-	lell_pcapng_handle* h_pcapng_le;
+	btbb_pcap_handle* h_pcap_bredr = NULL;
+	lell_pcap_handle* h_pcap_le = NULL;
+	btbb_pcapng_handle* h_pcapng_bredr = NULL;
+	lell_pcapng_handle* h_pcapng_le = NULL;
 
 public:
 	Ubertooth();

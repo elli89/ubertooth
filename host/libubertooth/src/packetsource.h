@@ -6,13 +6,13 @@
 class Packetsource
 {
 public:
-	Packetsource();
-	~Packetsource();
+	Packetsource() {};
+	virtual ~Packetsource() {};
 
-	void start();
-	void stop();
+	virtual void start()=0;
+	virtual void stop()=0;
+	virtual usb_pkt_rx receive()=0;
 
-	usb_pkt_rx receive();
 protected:
 	std::queue<usb_pkt_rx> fifo;
 };

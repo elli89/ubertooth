@@ -38,7 +38,7 @@
 #include <endian.h>
 #endif
 
-#include <cstdint>
+#include <stdint.h>
 
 // increment on every API change
 #define UBERTOOTH_API_VERSION 0x0102

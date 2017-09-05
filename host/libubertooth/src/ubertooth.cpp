@@ -72,7 +72,7 @@ static struct libusb_device_handle* find_ubertooth_device(int ubertooth_device)
 					r = cmd_get_serial(devh, serial);
 					if(r==0) {
 						std::cerr << "  Device " << i << ": ";
-						print_serial(serial, stderr);
+						print_serial(serial);
 					}
 					libusb_close(devh);
 				}
@@ -104,31 +104,16 @@ usb_pkt_rx Ubertooth::receive()
 	return source->receive();
 }
 
-Ubertooth::Ubertooth()
-{
-	devh = NULL;
-	source = NULL;
-	abs_start_ns = 0;
-	start_clk100ns = 0;
-	last_clk100ns = 0;
-	clk100ns_upper = 0;
-
-	h_pcap_bredr = NULL;
-	h_pcap_le = NULL;
-	h_pcapng_bredr = NULL;
-	h_pcapng_le = NULL;
-}
-
 Ubertooth::Ubertooth(int ubertooth_device)
 {
-	Ubertooth();
-
 	connect(ubertooth_device);
 }
 
 Ubertooth::~Ubertooth()
 {
 	stop();
+
+	delete source;
 
 	if (devh != NULL) {
 		cmd_stop(devh);
@@ -137,13 +122,13 @@ Ubertooth::~Ubertooth()
 	libusb_close(devh);
 	libusb_exit(NULL);
 
-	if (h_pcap_bredr)
+	if (h_pcap_bredr != NULL)
 		btbb_pcap_close(h_pcap_bredr);
-	if (h_pcap_le)
+	if (h_pcap_le != NULL)
 		lell_pcap_close(h_pcap_le);
-	if (h_pcapng_bredr)
+	if (h_pcapng_bredr != NULL)
 		btbb_pcapng_close(h_pcapng_bredr);
-	if (h_pcapng_le)
+	if (h_pcapng_le != NULL)
 		lell_pcapng_close(h_pcapng_le);
 }
 

@@ -3,8 +3,6 @@
 #include <libusb-1.0/libusb.h>
 #include "ubertooth_interface.h"
 #include "packetsource.h"
-#include <queue>
-#include <thread>
 
 class PacketsourceUbertooth : public Packetsource
 {
@@ -18,8 +16,8 @@ public:
 	usb_pkt_rx receive();
 
 protected:
-	libusb_device_handle* devh;
-	struct libusb_transfer* rx_xfer;
+	libusb_device_handle* devh = NULL;
+	struct libusb_transfer* rx_xfer = NULL;
 
 	bool stop_transfer;
 

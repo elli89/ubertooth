@@ -47,6 +47,7 @@ if( ${BUILD_SHARED_LIB} )
 	# Shared library
 	message(STATUS "Building shared library")
 	add_library(ubertooth SHARED ${cpp_sources})
+	target_compile_features(ubertooth PRIVATE cxx_range_for)
 	target_link_libraries(ubertooth ${LIBUBERTOOTH_LIBS})
 	set_target_properties(ubertooth PROPERTIES VERSION ${MAJOR_VERSION}.${MINOR_VERSION} SOVERSION 1)
 	set_target_properties(ubertooth PROPERTIES CLEAN_DIRECT_OUTPUT 1)
