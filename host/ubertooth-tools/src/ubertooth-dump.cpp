@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 {
 	int opt;
 	int bitstream = 0;
-	int modulation = MOD_BT_BASIC_RATE;
+	Modulation mod = Modulation::BT_BASIC_RATE;
 	int ubertooth_device = -1;
 
 	int r;
@@ -62,10 +62,10 @@ int main(int argc, char* argv[])
 			bitstream = 1;
 			break;
 		case 'c':
-			modulation = MOD_BT_BASIC_RATE;
+			mod = Modulation::BT_BASIC_RATE;
 			break;
 		case 'l':
-			modulation = MOD_BT_LOW_ENERGY;
+			mod = Modulation::BT_LOW_ENERGY;
 			break;
 		case 'U':
 			ubertooth_device = atoi(optarg);
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 		std::cerr << (int)serial[i];
 	std::cerr << std::dec << std::endl;
 
-	// ut.cmd_set_modulation(ut->devh, modulation);
+	ut.cmd_set_modulation(mod);
 
 	ut.cmd_rx_syms();
 

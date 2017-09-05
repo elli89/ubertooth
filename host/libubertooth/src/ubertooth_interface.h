@@ -39,6 +39,7 @@
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // increment on every API change
 #define UBERTOOTH_API_VERSION 0x0102
@@ -147,20 +148,20 @@ enum class Command : uint8_t {
 	FIX_CLOCK_DRIFT    = 69
 };
 
-enum class jam_modes {
-	JAM_NONE       = 0,
-	JAM_ONCE       = 1,
-	JAM_CONTINUOUS = 2,
+enum class JamMode : uint8_t {
+	NONE       = 0,
+	ONCE       = 1,
+	CONTINUOUS = 2,
 };
 
-enum class modulations {
-	MOD_BT_BASIC_RATE = 0,
-	MOD_BT_LOW_ENERGY = 1,
-	MOD_80211_FHSS    = 2,
-	MOD_NONE          = 3
+enum class Modulation : uint8_t {
+	BT_BASIC_RATE  = 0,
+	BT_LOW_ENERGY  = 1,
+	IEEE80211_FHSS = 2,
+	NONE           = 3
 };
 
-enum class usb_pkt_types {
+enum class PktType : uint8_t {
 	BR_PACKET  = 0,
 	LE_PACKET  = 1,
 	MESSAGE    = 2,
@@ -170,16 +171,16 @@ enum class usb_pkt_types {
 	EGO_PACKET = 6,
 };
 
-enum class hop_mode {
-	HOP_NONE      = 0,
-	HOP_SWEEP     = 1,
-	HOP_BLUETOOTH = 2,
-	HOP_BTLE      = 3,
-	HOP_DIRECT    = 4,
-	HOP_AFH       = 5,
+enum class HopMode : uint8_t {
+	NONE      = 0,
+	SWEEP     = 1,
+	BLUETOOTH = 2,
+	BTLE      = 3,
+	DIRECT    = 4,
+	AFH       = 5,
 };
 
-enum class usb_pkt_status {
+enum class PacketStatus : uint8_t {
 	DMA_OVERFLOW  = 0x01,
 	DMA_ERROR     = 0x02,
 	FIFO_OVERFLOW = 0x04,

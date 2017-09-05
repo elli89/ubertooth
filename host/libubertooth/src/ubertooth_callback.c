@@ -138,7 +138,7 @@ void cb_scan(Ubertooth* ut, void* args __attribute__((unused)))
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 	/* Sanity check */
@@ -187,7 +187,7 @@ void cb_afh_initial(Ubertooth* ut, void* args)
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 
@@ -233,7 +233,7 @@ void cb_afh_monitor(Ubertooth* ut, void* args)
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 	static unsigned long last_seen[79] = {0};
@@ -278,7 +278,7 @@ void cb_afh_r(Ubertooth* ut, void* args)
 
 	usb_pkt_rx usb = fifo_pop(ut->fifo);
 	usb_pkt_rx* rx = &usb;
-	char syms[BANK_LEN];
+	bool syms[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, syms);
 
 	static unsigned long last_seen[79] = {0};
@@ -461,7 +461,7 @@ void cb_rx(Ubertooth* ut, void* args)
 {
 	btbb_packet* pkt = NULL;
 	btbb_piconet* pn = (btbb_piconet *)args;
-	char syms[BANK_LEN*10] = {0};
+	bool syms[BANK_LEN];
 	int offset;
 	uint16_t clk_offset;
 	uint32_t clkn;
@@ -519,7 +519,7 @@ void cb_rx(Ubertooth* ut, void* args)
 	 * and other rx data. CLKN here is the 312.5us CLK27-0. The
 	 * btbb library can shift it be CLK1 if needed. */
 	clkn = (le32toh(rx->clkn_high) << 20) + (le32toh(rx->clk100ns) + offset*10 - 4000) / 3125;
-	btbb_packet_set_data(pkt, syms + offset, BANK_LEN*10 - offset,
+	btbb_packet_set_data(pkt, syms + offset, BANK_LEN - offset,
 	                     rx->channel, clkn);
 
 	/* When reading from file, caller will read

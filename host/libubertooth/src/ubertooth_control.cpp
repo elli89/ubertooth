@@ -169,9 +169,9 @@ void Ubertooth::cmd_get_serial(uint8_t* serial)
 	}
 }
 
-int Ubertooth::cmd_set_modulation(uint16_t mod)
+int Ubertooth::cmd_set_modulation(Modulation mod)
 {
-	return cmd_sync(CTRL_OUT, Command::SET_MOD, mod, 0, NULL, 0, 1000);
+	return cmd_sync(CTRL_OUT, Command::SET_MOD, (uint16_t)mod, 0, NULL, 0, 1000);
 }
 
 int Ubertooth::cmd_set_isp()

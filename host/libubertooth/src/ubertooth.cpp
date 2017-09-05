@@ -30,8 +30,8 @@
 
 struct libusb_device_handle* Ubertooth::find_ubertooth_device(int ubertooth_device)
 {
-	struct libusb_context *ctx = NULL;
 	struct libusb_device **usb_list = NULL;
+	struct libusb_context *ctx = NULL;
 	struct libusb_device_handle *devh = NULL;
 	struct libusb_device_descriptor desc;
 	int usb_devs, i, r, ret, ubertooths = 0;
@@ -88,6 +88,7 @@ struct libusb_device_handle* Ubertooth::find_ubertooth_device(int ubertooth_devi
 				}
 		}
 	}
+libusb_free_device_list(usb_list,1);
 	return devh;
 }
 

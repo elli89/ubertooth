@@ -81,6 +81,9 @@ LPCUSB_TARGET = LPC17xx
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
+# Output Directory
+OUTDIR = .
+
 # Library paths
 LIBS_PATH = ../common
 LPCUSB_PATH = $(LIBS_PATH)/lpcusb/target
@@ -116,6 +119,15 @@ LINKER_SCRIPT ?= LPC17xx_Linker_Script_with_bootloader.ld
 #     For a directory that has spaces, enclose it in quotes.
 EXTRAINCDIRS = $(LIBS_PATH) $(LPCUSB_PATH) ../../host/libubertooth/src
 
+# Compiler flag to set the C Standard level.
+#     c89   = "ANSI" C
+#     gnu89 = c89 plus GCC extensions
+#     c99   = ISO C99 standard (not yet fully implemented)
+#     gnu99 = c99 plus GCC extensions
+CSTANDARD = -std=gnu99
+
+CPPSTANDARD = -std=c++11
+
 # Place -D or -U options here for C sources
 CDEFS  = -D$(LPCUSB_TARGET) $(UBERTOOTH_OPTS) $(COMPILE_OPTS) -Wa,-a,-ad
 
@@ -146,6 +158,7 @@ CFLAGS += -Wsign-compare
 
 # CFLAGS += -fmessage-length=0
 CFLAGS += -ffunction-sections
+CFLAGS += -Wextra
 CFLAGS += -D__thumb2__=1
 CFLAGS += -msoft-float
 CFLAGS += -mno-sched-prolog
@@ -189,7 +202,7 @@ CPPFLAGS += -Wall
 #CPPFLAGS += -Wsign-compare
 CPPFLAGS += -Wa,-alhms=$(<:%.cpp=$(OBJDIR)/%.lst)
 CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
-#CPPFLAGS += $(CPPSTANDARD)
+CPPFLAGS += $(CPPSTANDARD)
 CPPFLAGS += -fno-exceptions
 CPPFLAGS += -fno-rtti
 CPPFLAGS += -fno-threadsafe-statics
@@ -282,7 +295,7 @@ GENDEPFLAGS = -MMD -MP -MD
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS) -I. -x c $(CFLAGS) $(GENDEPFLAGS)
+ALL_CFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS) -I. $(CFLAGS) $(GENDEPFLAGS)
 ALL_CPPFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS_ASM) $(ASFLAGS)
 # only difference between Linker flags and CFLAGS is CPU_FLAGS_ASM as -mapcs-frame is not needed

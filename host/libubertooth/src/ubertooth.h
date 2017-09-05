@@ -92,7 +92,7 @@ public:
 	uint8_t cmd_get_txled();
 	uint32_t cmd_get_partnum();
 	void cmd_get_serial(uint8_t* serial);
-	int cmd_set_modulation(uint16_t mod);
+	int cmd_set_modulation(Modulation mod);
 	uint8_t cmd_get_modulation();
 	int cmd_set_isp();
 	int cmd_reset();

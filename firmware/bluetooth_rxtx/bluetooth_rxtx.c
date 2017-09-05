@@ -1464,47 +1464,6 @@ void br_transmit()
 	cc2400_set(IOCFG, gio_save);
 }
 
-/* set LE access address */
-static void le_set_access_address(uint32_t aa) {
-	uint32_t aa_rev;
-
-	le.access_address = aa;
-	aa_rev = rbit(aa);
-	le.syncl = aa_rev & 0xffff;
-	le.synch = aa_rev >> 16;
-}
-
-/* reset le state, called by bt_generic_le and bt_follow_le() */
-void reset_le() {
-	le_set_access_address(0x8e89bed6);     // advertising channel access address
-	le.crc_init  = 0x555555;               // advertising channel CRCInit
-	le.crc_init_reversed = 0xAAAAAA;
-	le.crc_verify = 0;
-	le.last_packet = 0;
-
-	le.link_state = LINK_INACTIVE;
-
-	le.channel_idx = 0;
-	le.channel_increment = 0;
-
-	le.conn_epoch = 0;
-	le.interval_timer = 0;
-	le.conn_interval = 0;
-	le.conn_interval = 0;
-	le.conn_count = 0;
-
-	le.win_size = 0;
-	le.win_offset = 0;
-
-	le.update_pending = 0;
-	le.update_instant = 0;
-	le.interval_update = 0;
-	le.win_size_update = 0;
-	le.win_offset_update;
-
-	do_hop = 0;
-}
-
 // reset LE Promisc state
 void reset_le_promisc(void) {
 	memset(&le_promisc, 0, sizeof(le_promisc));
