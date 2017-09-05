@@ -24,8 +24,6 @@
 #ifndef __PACKETSOURCE_UBERTOOTH_H__
 #define __PACKETSOURCE_UBERTOOTH_H__
 
-#include "config.h"
-
 #include <packetsource.h>
 #include <map>
 

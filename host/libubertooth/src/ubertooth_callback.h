@@ -26,12 +26,14 @@
 #include "ubertooth_control.h"
 #include "ubertooth.h"
 
-void cb_afh_initial(ubertooth_t* ut, void* args);
-void cb_afh_monitor(ubertooth_t* ut, void* args);
-void cb_afh_r(ubertooth_t* ut, void* args);
-void cb_btle(ubertooth_t* ut, void* args);
-void cb_ego(ubertooth_t* ut, void* args __attribute__((unused)));
-void cb_rx(ubertooth_t* ut, void* args);
-void cb_scan(ubertooth_t* ut, void* args);
+typedef void (*rx_callback)(Ubertooth* ut, void* args);
+
+void cb_afh_initial(Ubertooth* ut, void* args);
+void cb_afh_monitor(Ubertooth* ut, void* args);
+void cb_afh_r(Ubertooth* ut, void* args);
+void cb_btle(Ubertooth* ut, void* args);
+void cb_ego(Ubertooth* ut, void* args __attribute__((unused)));
+void cb_rx(Ubertooth* ut, void* args);
+void cb_scan(Ubertooth* ut, void* args);
 
 #endif /* __UBERTOOTH_CALLBACK_H__ */

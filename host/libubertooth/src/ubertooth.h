@@ -23,30 +23,33 @@
 #define __UBERTOOTH_H__
 
 #include "ubertooth_control.h"
-#include "ubertooth_fifo.h"
+#include "ubertooth_bulk.h"
+#include "packetsource.h"
 #include <btbb.h>
 
 /* specan output types
  * see https://github.com/dkogan/feedgnuplot for plotter */
-enum specan_modes {
+enum class specan_modes {
 	SPECAN_STDOUT         = 0,
 	SPECAN_GNUPLOT_NORMAL = 1,
 	SPECAN_GNUPLOT_3D     = 2,
 	SPECAN_FILE           = 3
 };
 
-enum board_ids {
+enum class board_ids {
 	BOARD_ID_UBERTOOTH_ZERO = 0,
 	BOARD_ID_UBERTOOTH_ONE  = 1,
 	BOARD_ID_TC13BADGE      = 2
 };
 
-typedef struct {
-	/* Ringbuffers for USB and Bluetooth symbols */
-	fifo_t* fifo;
+class Ubertooth
+{
+private:
+	Packetsource* source;
+
+	Bulk* bulk;
 
 	struct libusb_device_handle* devh;
-	struct libusb_transfer* rx_xfer;
 
 	uint8_t stop_ubertooth;
 	uint64_t abs_start_ns;
@@ -58,9 +61,32 @@ typedef struct {
 	lell_pcap_handle* h_pcap_le;
 	btbb_pcapng_handle* h_pcapng_bredr;
 	lell_pcapng_handle* h_pcapng_le;
-} ubertooth_t;
 
-typedef void (*rx_callback)(ubertooth_t* ut, void* args);
+public:
+	Ubertooth();
+	Ubertooth(int ubertooth_device);
+
+	~Ubertooth();
+
+	void register_cleanup_handler(int do_exit);
+
+	int connect(int ubertooth_device);
+	void stop();
+	int get_api(uint16_t* version);
+	int check_api();
+	void set_timeout(int seconds);
+
+	int stream_rx_file(FILE* fp, rx_callback cb, void* cb_args);
+
+	void rx_dump(int full);
+	void rx_btle();
+	void rx_btle_file(FILE* fp);
+	void rx_afh(btbb_piconet* pn, int timeout);
+	void rx_afh_r(btbb_piconet* pn, int timeout);
+
+	void print_version();
+	void ubertooth_unpack_symbols(const uint8_t* buf, char* unpacked);
+};
 
 typedef struct {
 	unsigned allowed_access_address_errors;
@@ -70,31 +96,5 @@ extern uint32_t systime;
 extern FILE* infile;
 extern FILE* dumpfile;
 extern int max_ac_errors;
-
-void print_version();
-void register_cleanup_handler(ubertooth_t* ut, int do_exit);
-ubertooth_t* ubertooth_init();
-int ubertooth_connect(ubertooth_t* ut, int ubertooth_device);
-ubertooth_t* ubertooth_start(int ubertooth_device);
-void ubertooth_stop(ubertooth_t* ut);
-int ubertooth_get_api(ubertooth_t *ut, uint16_t *version);
-int ubertooth_check_api(ubertooth_t *ut);
-void ubertooth_set_timeout(ubertooth_t* ut, int seconds);
-
-int ubertooth_bulk_init(ubertooth_t* ut);
-void ubertooth_bulk_wait(ubertooth_t* ut);
-int ubertooth_bulk_receive(ubertooth_t* ut, rx_callback cb, void* cb_args);
-int ubertooth_bulk_thread_start();
-void ubertooth_bulk_thread_stop();
-
-int stream_rx_file(ubertooth_t* ut,FILE* fp, rx_callback cb, void* cb_args);
-
-void rx_dump(ubertooth_t* ut, int full);
-void rx_btle(ubertooth_t* ut);
-void rx_btle_file(FILE* fp);
-void rx_afh(ubertooth_t* ut, btbb_piconet* pn, int timeout);
-void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout);
-
-void ubertooth_unpack_symbols(const uint8_t* buf, bool* unpacked);
 
 #endif /* __UBERTOOTH_H__ */

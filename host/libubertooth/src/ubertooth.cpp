@@ -19,13 +19,9 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <pthread.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
+
+#include <iostream>
 
 #include "ubertooth.h"
 #include "ubertooth_callback.h"
@@ -50,8 +46,7 @@ pthread_t poll_thread;
 unsigned int packet_counter_max;
 
 void print_version() {
-	printf("libubertooth %s (%s), libbtbb %s (%s)\n", VERSION, RELEASE,
-	       btbb_get_version(), btbb_get_release());
+	std::cout << "libubertooth " << VERSION << " (" << RELEASE << "), libbtbb " << btbb_get_version() << " (" << btbb_get_release() << ")" << std::endl;
 }
 
 ubertooth_t* cleanup_devh = NULL;
@@ -113,7 +108,7 @@ static struct libusb_device_handle* find_ubertooth_device(int ubertooth_device)
 	for(i = 0 ; i < usb_devs ; ++i) {
 		r = libusb_get_device_descriptor(usb_list[i], &desc);
 		if(r < 0)
-			fprintf(stderr, "couldn't get usb descriptor for dev #%d!\n", i);
+			std::cerr << "couldn't get usb descriptor for dev " << i << "!" << std::endl;
 		if ((desc.idVendor == TC13_VENDORID && desc.idProduct == TC13_PRODUCTID)
 		    || (desc.idVendor == U0_VENDORID && desc.idProduct == U0_PRODUCTID)
 		    || (desc.idVendor == U1_VENDORID && desc.idProduct == U1_PRODUCTID))
@@ -131,19 +126,19 @@ static struct libusb_device_handle* find_ubertooth_device(int ubertooth_device)
 		return NULL;
 	else {
 		if (ubertooth_device < 0) {
-			fprintf(stderr, "multiple Ubertooth devices found! Use '-U' to specify device number\n");
+			std::cerr << "multiple Ubertooth devices found! Use '-U' to specify device number" << std::endl;
 			uint8_t serial[17], r;
 			for(i = 0 ; i < ubertooths ; ++i) {
 				libusb_get_device_descriptor(usb_list[ubertooth_devs[i]], &desc);
 				ret = libusb_open(usb_list[ubertooth_devs[i]], &devh);
 				if (ret) {
-					fprintf(stderr, "  Device %d: ", i);
+					std::cerr << "  Device " << i << ": "
 					show_libusb_error(ret);
 				}
 				else {
 					r = cmd_get_serial(devh, serial);
 					if(r==0) {
-						fprintf(stderr, "  Device %d: ", i);
+						std::cerr << "  Device " << i << ": "
 						print_serial(serial, stderr);
 					}
 					libusb_close(devh);
@@ -162,139 +157,10 @@ libusb_free_device_list(usb_list,1);
 	return devh;
 }
 
-/*
- * based on http://libusb.sourceforge.net/api-1.0/group__asyncio.html#ga9fcb2aa23d342060ebda1d0cf7478856
- */
-static void rx_xfer_status(int status)
-{
-	char *error_name = "";
-
-	switch (status) {
-		case LIBUSB_TRANSFER_ERROR:
-			error_name="Transfer error.";
-			break;
-		case LIBUSB_TRANSFER_TIMED_OUT:
-			error_name="Transfer timed out.";
-			break;
-		case LIBUSB_TRANSFER_CANCELLED:
-			error_name="Transfer cancelled.";
-			break;
-		case LIBUSB_TRANSFER_STALL:
-			error_name="Halt condition detected, or control request not supported.";
-			break;
-		case LIBUSB_TRANSFER_NO_DEVICE:
-			error_name="Device disconnected.";
-			break;
-		case LIBUSB_TRANSFER_OVERFLOW:
-			error_name="Device sent more data than requested.";
-			break;
-	}
-	fprintf(stderr,"rx_xfer status: %s (%d)\n",error_name,status);
-}
-
-static void cb_xfer(struct libusb_transfer *xfer)
-{
-	int r;
-	ubertooth_t* ut = (ubertooth_t*)xfer->user_data;
-
-	if (xfer->status != LIBUSB_TRANSFER_COMPLETED) {
-		if(xfer->status == LIBUSB_TRANSFER_TIMED_OUT) {
-			r = libusb_submit_transfer(ut->rx_xfer);
-			if (r < 0)
-				fprintf(stderr, "Failed to submit USB transfer (%d)\n", r);
-			return;
-		}
-		if(xfer->status != LIBUSB_TRANSFER_CANCELLED)
-			rx_xfer_status(xfer->status);
-		libusb_free_transfer(xfer);
-		ut->rx_xfer = NULL;
-		return;
-	}
-
-	if(ut->stop_ubertooth)
-		return;
-
-	fifo_inc_write_ptr(ut->fifo);
-	ut->rx_xfer->buffer = (uint8_t*)fifo_get_write_element(ut->fifo);
-
-	r = libusb_submit_transfer(ut->rx_xfer);
-	if (r < 0)
-		fprintf(stderr, "Failed to submit USB transfer (%d)\n", r);
-}
-
-static void* poll_thread_main(void* arg __attribute__((unused)))
-{
-	int r = 0;
-
-	while (!do_exit) {
-		struct timeval tv = { 1, 0 };
-		r = libusb_handle_events_timeout(NULL, &tv);
-		if (r < 0) {
-			do_exit = 1;
-			break;
-		}
-		usleep(1);
-	}
-
-	return NULL;
-}
-
-int ubertooth_bulk_thread_start()
-{
-	do_exit = 0;
-
-	return pthread_create(&poll_thread, NULL, poll_thread_main, NULL);
-}
-
-void ubertooth_bulk_thread_stop()
-{
-	do_exit = 1;
-
-	pthread_join(poll_thread, NULL);
-}
-
-int ubertooth_bulk_init(ubertooth_t* ut)
-{
-	int r;
-
-	ut->rx_xfer = libusb_alloc_transfer(0);
-	libusb_fill_bulk_transfer(ut->rx_xfer, ut->devh, DATA_IN, (uint8_t*)fifo_get_write_element(ut->fifo), PKT_LEN, cb_xfer, ut, TIMEOUT);
-
-	r = libusb_submit_transfer(ut->rx_xfer);
-	if (r < 0) {
-		fprintf(stderr, "rx_xfer submission: %d\n", r);
-		return -1;
-	}
-	return 0;
-}
-
-void ubertooth_bulk_wait(ubertooth_t* ut)
-{
-	while (fifo_empty(ut->fifo) && !ut->stop_ubertooth)
-		usleep(1);
-}
-
-int ubertooth_bulk_receive(ubertooth_t* ut, rx_callback cb, void* cb_args)
-{
-	if (!fifo_empty(ut->fifo)) {
-		(*cb)(ut, cb_args);
-		if(ut->stop_ubertooth) {
-			if(ut->rx_xfer)
-				libusb_cancel_transfer(ut->rx_xfer);
-			return 1;
-		}
-		fflush(stderr);
-		return 0;
-	} else {
-		usleep(1);
-		return -1;
-	}
-}
-
-static int stream_rx_usb(ubertooth_t* ut, rx_callback cb, void* cb_args)
+int Ubertooth::stream_rx_usb(rx_callback cb, void* cb_args)
 {
 	// init USB transfer
-	int r = ubertooth_bulk_init(ut);
+	int r = bulk_init();
 	if (r < 0)
 		return r;
 
@@ -303,17 +169,17 @@ static int stream_rx_usb(ubertooth_t* ut, rx_callback cb, void* cb_args)
 		return r;
 
 	// tell ubertooth to send packets
-	r = cmd_rx_syms(ut->devh);
+	r = cmd_rx_syms(devh);
 	if (r < 0)
 		return r;
 
 	// receive and process each packet
-	while(!ut->stop_ubertooth) {
-		ubertooth_bulk_wait(ut);
-		r = ubertooth_bulk_receive(ut, cb, cb_args);
+	while(!stop_ubertooth) {
+		bulk_wait();
+		r = bulk_receive(cb, cb_args);
 	}
 
-	ubertooth_bulk_thread_stop();
+	bulk_thread_stop();
 
 	return 1;
 }
@@ -334,7 +200,7 @@ int stream_rx_file(ubertooth_t* ut, FILE* fp, rx_callback cb, void* cb_args)
 		nitems = fread(buf, sizeof(buf[0]), PKT_LEN, fp);
 		if (nitems != PKT_LEN)
 			return 0;
-		fifo_push(ut->fifo, (usb_pkt_rx*)buf);
+		fifo.push((usb_pkt_rx*)buf);
 		(*cb)(ut, cb_args);
 	}
 }
@@ -385,9 +251,7 @@ void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unus
 	if (r < 0)
 		return;
 
-	r = ubertooth_bulk_thread_start();
-	if (r < 0)
-		return;
+	Bulk::thread_start();
 
 	// tell ubertooth to send packets
 	r = cmd_rx_syms(ut->devh);
@@ -399,21 +263,21 @@ void rx_afh_r(ubertooth_t* ut, btbb_piconet* pn, int timeout __attribute__((unus
 		ubertooth_bulk_receive(ut, cb_afh_r, pn);
 		if(lasttime < time(NULL)) {
 			lasttime = time(NULL);
-			printf("%u ", (uint32_t)time(NULL));
+			std::cout << (uint32_t)time(NULL) << " ";
 			// btbb_print_afh_map(pn);
 
 			uint8_t* afh_map = btbb_piconet_get_afh_map(pn);
 			for (i=0; i<10; i++)
 				for (j=0; j<8; j++)
 					if (afh_map[i] & (1<<j))
-						printf("1");
+						std::cout << 1;
 					else
-						printf("0");
-			printf("\n");
+						std::cout << 0;
+			std::cout << std::endl;
 		}
 	}
 
-	ubertooth_bulk_thread_stop();
+	Bulk::thread_stop();
 }
 
 void rx_btle_file(FILE* fp)
@@ -437,12 +301,12 @@ void ubertooth_unpack_symbols(const uint8_t* buf, bool* unpacked)
 	}
 }
 
-static void cb_dump_bitstream(ubertooth_t* ut, void* args __attribute__((unused)))
+static void cb_dump_bitstream(void* args __attribute__((unused)))
 {
 	int i;
 	char nl = '\n';
 
-	usb_pkt_rx usb = fifo_pop(ut->fifo);
+	usb_pkt_rx usb = fifo.pop();
 	usb_pkt_rx* rx = &usb;
 	char bitstream[BANK_LEN];
 	ubertooth_unpack_symbols((uint8_t*)rx->data, (bool*)bitstream);
@@ -451,8 +315,7 @@ static void cb_dump_bitstream(ubertooth_t* ut, void* args __attribute__((unused)
 	for (i = 0; i < BANK_LEN; ++i)
 		bitstream[i] += 0x30;
 
-	fprintf(stderr, "rx block timestamp %u * 100 nanoseconds\n",
-	        rx->clk100ns);
+	std::cerr << "rx block timestamp " << rx->clk100ns << " * 100 nanoseconds" << std::endl;
 	if (dumpfile == NULL) {
 		fwrite(bitstream, sizeof(uint8_t), BANK_LEN, stdout);
 		fwrite(&nl, sizeof(uint8_t), 1, stdout);
@@ -464,10 +327,10 @@ static void cb_dump_bitstream(ubertooth_t* ut, void* args __attribute__((unused)
 
 static void cb_dump_full(ubertooth_t* ut, void* args __attribute__((unused)))
 {
-	usb_pkt_rx usb = fifo_pop(ut->fifo);
+	usb_pkt_rx usb = fifo.pop();
 	usb_pkt_rx* rx = &usb;
 
-	fprintf(stderr, "rx block timestamp %u * 100 nanoseconds\n", rx->clk100ns);
+	std::cerr << "rx block timestamp " << rx->clk100ns << " * 100 nanoseconds" << std::endl;
 	uint32_t time_be = htobe32((uint32_t)time(NULL));
 	if (dumpfile == NULL) {
 		fwrite(&time_be, 1, sizeof(time_be), stdout);
@@ -488,110 +351,96 @@ void rx_dump(ubertooth_t* ut, int bitstream)
 		stream_rx_usb(ut, cb_dump_full, NULL);
 }
 
-void ubertooth_stop(ubertooth_t* ut)
+void Ubertooth::stop()
 {
-	/* make sure xfers are not active */
-	if(ut->rx_xfer != NULL)
-		libusb_cancel_transfer(ut->rx_xfer);
-	if (ut->devh != NULL) {
-		cmd_stop(ut->devh);
-		libusb_release_interface(ut->devh, 0);
+	stop_ubertooth = true;
+}
+
+Ubertooth::~Ubertooth()
+{
+	if (devh != NULL) {
+		cmd_stop(devh);
+		libusb_release_interface(devh, 0);
 	}
-	libusb_close(ut->devh);
+	libusb_close(devh);
 	libusb_exit(NULL);
 
-	if (ut->h_pcap_bredr) {
-		btbb_pcap_close(ut->h_pcap_bredr);
-		ut->h_pcap_bredr = NULL;
+	if (h_pcap_bredr) {
+		btbb_pcap_close(h_pcap_bredr);
+		h_pcap_bredr = NULL;
 	}
-	if (ut->h_pcap_le) {
-		lell_pcap_close(ut->h_pcap_le);
-		ut->h_pcap_le = NULL;
+	if (h_pcap_le) {
+		lell_pcap_close(h_pcap_le);
+		h_pcap_le = NULL;
 	}
 
-	if (ut->h_pcapng_bredr) {
-		btbb_pcapng_close(ut->h_pcapng_bredr);
-		ut->h_pcapng_bredr = NULL;
+	if (h_pcapng_bredr) {
+		btbb_pcapng_close(h_pcapng_bredr);
+		h_pcapng_bredr = NULL;
 	}
-	if (ut->h_pcapng_le) {
-		lell_pcapng_close(ut->h_pcapng_le);
-		ut->h_pcapng_le = NULL;
+	if (h_pcapng_le) {
+		lell_pcapng_close(h_pcapng_le);
+		h_pcapng_le = NULL;
 	}
 }
 
-ubertooth_t* ubertooth_init()
+Ubertooth::Ubertooth()
 {
-	ubertooth_t* ut = (ubertooth_t*)malloc(sizeof(ubertooth_t));
-	if(ut == NULL) {
-		fprintf(stderr, "Unable to allocate memory\n");
-		return NULL;
-	}
+	devh = NULL;
+	bulk = NULL;
+	stop_ubertooth = false;
+	abs_start_ns = 0;
+	start_clk100ns = 0;
+	last_clk100ns = 0;
+	clk100ns_upper = 0;
 
-	ut->fifo = fifo_init();
-	if(ut->fifo == NULL)
-		fprintf(stderr, "Unable to initialize ringbuffer\n");
-
-	ut->devh = NULL;
-	ut->rx_xfer = NULL;
-	ut->stop_ubertooth = 0;
-	ut->abs_start_ns = 0;
-	ut->start_clk100ns = 0;
-	ut->last_clk100ns = 0;
-	ut->clk100ns_upper = 0;
-
-	ut->h_pcap_bredr = NULL;
-	ut->h_pcap_le = NULL;
-	ut->h_pcapng_bredr = NULL;
-	ut->h_pcapng_le = NULL;
-
-	return ut;
+	h_pcap_bredr = NULL;
+	h_pcap_le = NULL;
+	h_pcapng_bredr = NULL;
+	h_pcapng_le = NULL;
 }
 
-int ubertooth_connect(ubertooth_t* ut, int ubertooth_device)
+int Ubertooth::connect(int ubertooth_device)
 {
 	int r = libusb_init(NULL);
 	if (r < 0) {
-		fprintf(stderr, "libusb_init failed (got 1.0?)\n");
+		std::cerr << "libusb_init failed (got 1.0?)" << std::endl;
 		return -1;
 	}
 
-	ut->devh = find_ubertooth_device(ubertooth_device);
-	if (ut->devh == NULL) {
-		fprintf(stderr, "could not open Ubertooth device\n");
-		ubertooth_stop(ut);
+	devh = find_ubertooth_device(ubertooth_device);
+	if (devh == NULL) {
+		std::cerr << "could not open Ubertooth device" << std::endl;
+		stop();
 		return -1;
 	}
 
-	r = libusb_claim_interface(ut->devh, 0);
+	r = libusb_claim_interface(devh, 0);
 	if (r < 0) {
-		fprintf(stderr, "usb_claim_interface error %d\n", r);
-		ubertooth_stop(ut);
+		std::cerr << "usb_claim_interface error " << r << std::endl;
+		stop();
 		return -1;
 	}
+
+	bulk = new Bulk(devh);
 
 	return 1;
 }
 
-ubertooth_t* ubertooth_start(int ubertooth_device)
+Ubertooth::Ubertooth(int ubertooth_device)
 {
-	ubertooth_t* ut = ubertooth_init();
+	Ubertooth();
 
-	int r = ubertooth_connect(ut, ubertooth_device);
-	if (r < 0)
-		return NULL;
-
-	return ut;
+	connect(ubertooth_device);
 }
 
-int ubertooth_get_api(ubertooth_t *ut, uint16_t *version) {
-	int result;
-	libusb_device* dev;
+int Ubertooth::get_api(uint16_t* version) {
 	struct libusb_device_descriptor desc;
-	dev = libusb_get_device(ut->devh);
-	result = libusb_get_device_descriptor(dev, &desc);
+	libusb_device* dev = libusb_get_device(devh);
+	int result = libusb_get_device_descriptor(dev, &desc);
 	if (result < 0) {
 		if (result == LIBUSB_ERROR_PIPE) {
-			fprintf(stderr, "control message unsupported\n");
+			std::cerr << "control message unsupported" << std::endl;
 		} else {
 			show_libusb_error(result);
 		}
@@ -601,28 +450,33 @@ int ubertooth_get_api(ubertooth_t *ut, uint16_t *version) {
 	return 0;
 }
 
-int ubertooth_check_api(ubertooth_t *ut) {
+int Ubertooth::check_api() {
 	uint16_t version;
-	int result;
-	result = ubertooth_get_api(ut, &version);
+	int result = get_api(&version);
 	if (result < 0) {
 		return result;
 	}
 
 	if (version < UBERTOOTH_API_VERSION) {
-		fprintf(stderr, "Ubertooth API version %x.%02x found, libubertooth %s requires %x.%02x.\n",
-				(version>>8)&0xFF, version&0xFF, VERSION,
-				(UBERTOOTH_API_VERSION>>8)&0xFF, UBERTOOTH_API_VERSION&0xFF);
-		fprintf(stderr, "Please upgrade to latest released firmware.\n");
-		fprintf(stderr, "See: https://github.com/greatscottgadgets/ubertooth/wiki/Firmware\n");
-		ubertooth_stop(ut);
+		std::cerr << "Ubertooth API version "
+		          << ((version>>8)&0xFF) << "." << (version&0xFF)
+				  << " found, libubertooth "
+				  << VERSION
+				  << " requires "
+				  << ((version>>8)&0xFF) << "." << (version&0xFF)
+				  << std::endl;
+		std::cerr << "Please upgrade to latest released firmware." << std::endl;
+		std::cerr << "See: https://github.com/greatscottgadgets/ubertooth/wiki/Firmware" << std::endl;
+		stop();
 		return -1;
 	}
 	else if (version > UBERTOOTH_API_VERSION) {
-		fprintf(stderr, "Ubertooth API version %x.%02x found, newer than that supported by libubertooth (%x.%02x).\n",
-				(version>>8)&0xFF, version&0xFF,
-				(UBERTOOTH_API_VERSION>>8)&0xFF, UBERTOOTH_API_VERSION&0xFF);
-		fprintf(stderr, "Things will still work, but you might want to update your host tools.\n");
+		std::cerr << "Ubertooth API version "
+		          << ((version>>8)&0xFF) << "." << (version&0xFF)
+		          << " found, newer than that supported by libubertooth ("
+		          << ((UBERTOOTH_API_VERSION>>8)&0xFF) << "." << (UBERTOOTH_API_VERSION&0xFF)
+		          << ")." << std::endl;
+		std::cerr << "Things will still work, but you might want to update your host tools." << std::endl;
 	}
 	return 0;
 }

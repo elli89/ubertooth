@@ -40,7 +40,7 @@
 #define CLK_TUNE_TIME   2250
 #define CLK_TUNE_OFFSET  200
 
-enum ubertooth_usb_commands {
+enum class ubertooth_usb_commands {
 	UBERTOOTH_PING               = 0,
 	UBERTOOTH_RX_SYMBOLS         = 1,
 	UBERTOOTH_TX_SYMBOLS         = 2,
@@ -113,20 +113,20 @@ enum ubertooth_usb_commands {
 	UBERTOOTH_FIX_CLOCK_DRIFT    = 69,
 };
 
-enum jam_modes {
+enum class jam_modes {
 	JAM_NONE       = 0,
 	JAM_ONCE       = 1,
 	JAM_CONTINUOUS = 2,
 };
 
-enum modulations {
+enum class modulations {
 	MOD_BT_BASIC_RATE = 0,
 	MOD_BT_LOW_ENERGY = 1,
 	MOD_80211_FHSS    = 2,
 	MOD_NONE          = 3
 };
 
-enum usb_pkt_types {
+enum class usb_pkt_types {
 	BR_PACKET  = 0,
 	LE_PACKET  = 1,
 	MESSAGE    = 2,
@@ -136,7 +136,7 @@ enum usb_pkt_types {
 	EGO_PACKET = 6,
 };
 
-enum hop_mode {
+enum class hop_mode {
 	HOP_NONE      = 0,
 	HOP_SWEEP     = 1,
 	HOP_BLUETOOTH = 2,
@@ -145,7 +145,7 @@ enum hop_mode {
 	HOP_AFH       = 5,
 };
 
-enum usb_pkt_status {
+enum class usb_pkt_status {
 	DMA_OVERFLOW  = 0x01,
 	DMA_ERROR     = 0x02,
 	FIFO_OVERFLOW = 0x04,
