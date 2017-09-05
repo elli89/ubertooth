@@ -19,11 +19,16 @@ public:
 
 protected:
 	libusb_device_handle* devh;
+	struct libusb_transfer* rx_xfer;
 
-	static int thread_start();
+	bool stop_transfer;
+
+	static void thread_start();
 	static void thread_stop();
 
 	static bool exit_thread;
 	static std::thread* poll_thread;
 	static void poll();
+
+	static void cb_xfer(struct libusb_transfer* xfer);
 };
