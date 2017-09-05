@@ -25,8 +25,8 @@ protected:
 	static void thread_stop();
 
 	static bool exit_thread;
-	static std::thread* poll_thread;
-	static void poll();
+	static pthread_t poll_thread;
+	static void* poll(void* arg __attribute__((unused)));
 
 	static void cb_xfer(struct libusb_transfer* xfer);
 };

@@ -6,10 +6,10 @@
 #include <pthread.h>
 #include <unistd.h>
 
-volatile bool exit_thread;
-pthread_t poll_thread;
+bool PacketsourceUbertooth::exit_thread;
+pthread_t PacketsourceUbertooth::poll_thread;
 
-void* poll(void* arg __attribute__((unused)))
+void* PacketsourceUbertooth::poll(void* arg __attribute__((unused)))
 {
 	while (!exit_thread) {
 		struct timeval tv = { 1, 0 };
@@ -22,19 +22,18 @@ void* poll(void* arg __attribute__((unused)))
 	return NULL;
 }
 
-void thread_start()
+void PacketsourceUbertooth::thread_start()
 {
 	exit_thread = false;
 
 	pthread_create(&poll_thread, NULL, poll, NULL);
 }
 
-void thread_stop()
+void PacketsourceUbertooth::thread_stop()
 {
 	exit_thread = true;
 
 	pthread_join(poll_thread, NULL);
-	std::cout << "blu" << std::endl;
 }
 
 PacketsourceUbertooth::PacketsourceUbertooth(libusb_device_handle* devh)
@@ -108,7 +107,6 @@ usb_pkt_rx PacketsourceUbertooth::receive()
 	while (fifo.empty() && !stop_transfer)
 		usleep(1);
 
-	// FIXME handle empty fifo
 	usb_pkt_rx pkt;
 	if (!fifo.empty()) {
 		pkt = fifo.front();
