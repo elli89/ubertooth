@@ -19,7 +19,10 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include "ubertooth.h"
+extern "C" {
+#include <ubertooth.h>
+}
+#include <cstdlib>
 
 #define BTLE_CHANNELS 40
 #define ADVERTISING_CHANNELS 3
@@ -85,12 +88,12 @@ static const uint8_t hop_interval_lut[] = {
     6, 22, 9, 12, 18, 36,
 };
 
-uint16_t btle_next_hop(le_state_t *le);
+uint16_t btle_next_hop(le_state_t* le);
 uint8_t btle_channel_index(uint8_t channel);
 uint16_t btle_channel_index_to_phys(uint8_t idx);
-uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, int len);
-uint32_t btle_reverse_crc(uint32_t crc, uint8_t *data, int len);
-uint32_t btle_crcgen_lut(uint32_t crc_init, uint8_t *data, int len);
+uint32_t btle_calc_crc(uint32_t crc_init, uint8_t* data, size_t len);
+uint32_t btle_reverse_crc(uint32_t crc, uint8_t* data, size_t len);
+uint32_t btle_crcgen_lut(uint32_t crc_init, uint8_t* data, size_t len);
 
 static const uint32_t whitening_word[40][12] = {
 	{ 0xc3bcb240, 0x5f4a371f, 0x9a9cf685, 0x44c5d6c1, 0xe1de5920, 0xafa51b8f,

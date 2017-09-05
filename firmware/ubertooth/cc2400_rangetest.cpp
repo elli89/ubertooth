@@ -48,7 +48,7 @@ rangetest_result rr;
  *   crc: 2 bytes
  */
 
-void cc2400_rangetest(volatile uint16_t *chan_ptr)
+void cc2400_rangetest(volatile uint16_t* chan_ptr)
 {
 #ifdef TX_ENABLE
 	uint32_t command[5];
@@ -167,7 +167,7 @@ void cc2400_rangetest(volatile uint16_t *chan_ptr)
 }
 
 /* This is the repeater implementation to be used with cc2400_rangetest(). */
-void cc2400_repeater(volatile uint16_t *chan_ptr)
+void cc2400_repeater(volatile uint16_t* chan_ptr)
 {
 #ifdef TX_ENABLE
 	int i;
@@ -236,13 +236,13 @@ void cc2400_repeater(volatile uint16_t *chan_ptr)
 #endif
 }
 
-void cc2400_txtest(volatile uint8_t *mod_ptr, volatile uint16_t *chan_ptr)
+void cc2400_txtest(volatile Modulation* mod_ptr, volatile uint16_t* chan_ptr)
 {
 #ifdef TX_ENABLE
 	uint16_t mdmctrl;
-	if (*mod_ptr == MOD_BT_BASIC_RATE) {
+	if (*mod_ptr == Modulation::BT_BASIC_RATE) {
 		mdmctrl = 0x0029; // 160 kHz frequency deviation
-	} else if (*mod_ptr == MOD_BT_LOW_ENERGY) {
+	} else if (*mod_ptr == Modulation::BT_LOW_ENERGY) {
 		mdmctrl = 0x0040; // 250 kHz frequency deviation
 	} else {
 		/* oops */

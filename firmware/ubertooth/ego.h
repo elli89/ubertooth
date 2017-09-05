@@ -19,17 +19,16 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __EGO_H
-#define __EGO_H
+#pragma once
 
-#include "ubertooth.h"
 
-typedef enum _ego_mode_t {
-	EGO_FOLLOW = 0,
-	EGO_CONTINUOUS_RX,
-	EGO_JAM,
-} ego_mode_t;
+#include <ubertooth.h>
+#include "ubertooth_interface.h"
 
-void ego_main(ego_mode_t mode);
+enum class EgoMode {
+	FOLLOW,
+	CONTINUOUS_RX,
+	JAM,
+};
 
-#endif /* __EGO_H */
+void ego_main(EgoMode mode);

@@ -46,10 +46,10 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdint.h>
+#include <cstdint>
+#include <ubertooth.h>
 
 extern "C" {
-#include <ubertooth.h>
 #include "usbapi.h"
 #include "usbhw_lpc.h"
 }
@@ -302,4 +302,3 @@ int main(void)
 
 	return 0;
 }
-

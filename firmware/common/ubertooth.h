@@ -22,14 +22,13 @@
 #ifndef __UBERTOOTH_H
 #define __UBERTOOTH_H
 
-#include "lpc17.h"
-#include "cc2400.h"
-#include "ubertooth_interface.h"
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#include "lpc17.h"
+#include "cc2400.h"
 
 typedef void (*IAP_ENTRY)(uint32_t[], uint32_t[]);
 extern const IAP_ENTRY iap_entry;

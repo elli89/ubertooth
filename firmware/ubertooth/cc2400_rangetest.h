@@ -22,14 +22,15 @@
 #ifndef __CC2400_RANGETEST_H
 #define __CC2400_RANGETEST_H
 
-#include "ubertooth.h"
+#include <ubertooth.h>
+#include "ubertooth_interface.h"
 
 extern rangetest_result rr;
 
-void cc2400_rangetest(volatile uint16_t *chan_ptr);
+void cc2400_rangetest(volatile uint16_t* chan_ptr);
 
-void cc2400_repeater(volatile uint16_t *chan_ptr);
+void cc2400_repeater(volatile uint16_t* chan_ptr);
 
-void cc2400_txtest(volatile uint8_t *mod_ptr, volatile uint16_t *chan_ptr);
+void cc2400_txtest(volatile Modulation* mod_ptr, volatile uint16_t* chan_ptr);
 
 #endif /* __CC2400_RANGETEST_H */

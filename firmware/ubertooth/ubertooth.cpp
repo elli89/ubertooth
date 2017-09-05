@@ -20,9 +20,9 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <string.h>
+#include <cstring>
 
-#include "ubertooth.h"
+#include <ubertooth.h>
 #include "ubertooth_usb.h"
 #include "ubertooth_interface.h"
 #include "ubertooth_rssi.h"
@@ -34,15 +34,12 @@
 #include "cc2400_rangetest.h"
 #include "ego.h"
 
-#define MIN(x,y)	((x)<(y)?(x):(y))
-#define MAX(x,y)	((x)>(y)?(x):(y))
-
 /* build info */
 const char compile_info[] =
 	"ubertooth ";// GIT_REVISION " (" COMPILE_BY "@" COMPILE_HOST ") " TIMESTAMP;
 
 /* hopping stuff */
-volatile uint8_t  hop_mode = HOP_NONE;
+volatile HopMode  hop_mode = HopMode::NONE;
 volatile bool     do_hop = false;                  // set by timer interrupt
 volatile uint16_t channel = 2441;
 volatile uint16_t hop_direct_channel = 0;      // for hopping directly to a channel
@@ -60,10 +57,10 @@ volatile uint8_t  status = 0;
 /* operation mode */
 volatile uint8_t mode = MODE_IDLE;
 volatile uint8_t requested_mode = MODE_IDLE;
-volatile uint8_t jam_mode = JAM_NONE;
-volatile ego_mode_t ego_mode = EGO_FOLLOW;
+volatile JamMode jam_mode = JamMode::NONE;
+volatile EgoMode ego_mode = EgoMode::FOLLOW;
 
-volatile uint8_t modulation = MOD_BT_BASIC_RATE;
+volatile Modulation modulation = Modulation::BT_BASIC_RATE;
 
 /* specan stuff */
 volatile uint16_t low_freq = 2400;
@@ -110,7 +107,7 @@ packet_cb_t packet_cb = NULL;
 /* Unpacked symbol buffers (two rxbufs) */
 char unpacked[DMA_SIZE*8*2];
 
-static int enqueue(uint8_t type, uint8_t* buf)
+static int enqueue(PacketType type, uint8_t* buf)
 {
 	usb_pkt_rx* f = usb_enqueue();
 
@@ -121,7 +118,7 @@ static int enqueue(uint8_t type, uint8_t* buf)
 	}
 
 	f->pkt_type = type;
-	if(type == SPECAN) {
+	if(type == PacketType::SPECAN) {
 		f->clkn_high = (clkn >> 20) & 0xff;
 		f->clk100ns = CLK100NS;
 	} else {
@@ -142,7 +139,7 @@ static int enqueue(uint8_t type, uint8_t* buf)
 	return 1;
 }
 
-int enqueue_with_ts(uint8_t type, uint8_t* buf, uint32_t ts)
+int enqueue_with_ts(PacketType type, uint8_t* buf, uint32_t ts)
 {
 	usb_pkt_rx* f = usb_enqueue();
 
@@ -177,102 +174,102 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 	uint16_t reg_val;
 	uint8_t i;
 
-	switch (request) {
+	switch ((UbertoothCommand)request) {
 
-	case UBERTOOTH_PING:
+	case UbertoothCommand::PING:
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_RX_SYMBOLS:
+	case UbertoothCommand::RX_SYMBOLS:
 		requested_mode = MODE_RX_SYMBOLS;
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_TX_SYMBOLS:
-		hop_mode = HOP_BLUETOOTH;
+	case UbertoothCommand::TX_SYMBOLS:
+		hop_mode = HopMode::BLUETOOTH;
 		requested_mode = MODE_TX_SYMBOLS;
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_GET_USRLED:
+	case UbertoothCommand::GET_USRLED:
 		data[0] = (USRLED) ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_USRLED:
+	case UbertoothCommand::SET_USRLED:
 		if (request_params[0])
 			USRLED_SET;
 		else
 			USRLED_CLR;
 		break;
 
-	case UBERTOOTH_GET_RXLED:
+	case UbertoothCommand::GET_RXLED:
 		data[0] = (RXLED) ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_RXLED:
+	case UbertoothCommand::SET_RXLED:
 		if (request_params[0])
 			RXLED_SET;
 		else
 			RXLED_CLR;
 		break;
 
-	case UBERTOOTH_GET_TXLED:
+	case UbertoothCommand::GET_TXLED:
 		data[0] = (TXLED) ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_TXLED:
+	case UbertoothCommand::SET_TXLED:
 		if (request_params[0])
 			TXLED_SET;
 		else
 			TXLED_CLR;
 		break;
 
-	case UBERTOOTH_GET_1V8:
+	case UbertoothCommand::GET_1V8:
 		data[0] = (CC1V8) ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_1V8:
+	case UbertoothCommand::SET_1V8:
 		if (request_params[0])
 			CC1V8_SET;
 		else
 			CC1V8_CLR;
 		break;
 
-	case UBERTOOTH_GET_PARTNUM:
+	case UbertoothCommand::GET_PARTNUM:
 		get_part_num(data, data_len);
 		break;
 
-	case UBERTOOTH_RESET:
+	case UbertoothCommand::RESET:
 		requested_mode = MODE_RESET;
 		break;
 
-	case UBERTOOTH_GET_SERIAL:
+	case UbertoothCommand::GET_SERIAL:
 		get_device_serial(data, data_len);
 		break;
 
 #ifdef UBERTOOTH_ONE
-	case UBERTOOTH_GET_PAEN:
+	case UbertoothCommand::GET_PAEN:
 		data[0] = (PAEN) ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_PAEN:
+	case UbertoothCommand::SET_PAEN:
 		if (request_params[0])
 			PAEN_SET;
 		else
 			PAEN_CLR;
 		break;
 
-	case UBERTOOTH_GET_HGM:
+	case UbertoothCommand::GET_HGM:
 		data[0] = (HGM) ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_HGM:
+	case UbertoothCommand::SET_HGM:
 		if (request_params[0])
 			HGM_SET;
 		else
@@ -281,16 +278,16 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 #endif
 
 #ifdef TX_ENABLE
-	case UBERTOOTH_TX_TEST:
+	case UbertoothCommand::TX_TEST:
 		requested_mode = MODE_TX_TEST;
 		break;
 
-	case UBERTOOTH_GET_PALEVEL:
+	case UbertoothCommand::GET_PALEVEL:
 		data[0] = cc2400_get(FREND) & 0x7;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_PALEVEL:
+	case UbertoothCommand::SET_PALEVEL:
 		if( request_params[0] < 8 ) {
 			cc2400_set(FREND, 8 | request_params[0]);
 		} else {
@@ -298,16 +295,16 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		}
 		break;
 
-	case UBERTOOTH_RANGE_TEST:
+	case UbertoothCommand::RANGE_TEST:
 		requested_mode = MODE_RANGE_TEST;
 		break;
 
-	case UBERTOOTH_REPEATER:
+	case UbertoothCommand::REPEATER:
 		requested_mode = MODE_REPEATER;
 		break;
 #endif
 
-	case UBERTOOTH_RANGE_CHECK:
+	case UbertoothCommand::RANGE_CHECK:
 		data[0] = rr.valid;
 		data[1] = rr.request_pa;
 		data[2] = rr.request_num;
@@ -316,35 +313,35 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 5;
 		break;
 
-	case UBERTOOTH_STOP:
+	case UbertoothCommand::STOP:
 		requested_mode = MODE_IDLE;
 		break;
 
-	case UBERTOOTH_GET_MOD:
-		data[0] = modulation;
+	case UbertoothCommand::GET_MOD:
+		data[0] = (uint8_t)modulation;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_MOD:
-		modulation = request_params[0];
+	case UbertoothCommand::SET_MOD:
+		modulation = (Modulation)request_params[0];
 		break;
 
-	case UBERTOOTH_GET_CHANNEL:
+	case UbertoothCommand::GET_CHANNEL:
 		data[0] = channel & 0xFF;
 		data[1] = (channel >> 8) & 0xFF;
 		*data_len = 2;
 		break;
 
-	case UBERTOOTH_SET_CHANNEL:
+	case UbertoothCommand::SET_CHANNEL:
 		requested_channel = request_params[0];
 		/* bluetooth band sweep mode, start at channel 2402 */
 		if (requested_channel > MAX_FREQ) {
-			hop_mode = HOP_SWEEP;
+			hop_mode = HopMode::SWEEP;
 			requested_channel = 2402;
 		}
 		/* fixed channel mode, can be outside bluetooth band */
 		else {
-			hop_mode = HOP_NONE;
+			hop_mode = HopMode::NONE;
 			requested_channel = MAX(requested_channel, MIN_FREQ);
 			requested_channel = MIN(requested_channel, MAX_FREQ);
 		}
@@ -360,17 +357,17 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		}
 		break;
 
-	case UBERTOOTH_SET_ISP:
+	case UbertoothCommand::SET_ISP:
 		set_isp();
 		*data_len = 0; /* should never return */
 		break;
 
-	case UBERTOOTH_FLASH:
+	case UbertoothCommand::FLASH:
 		bootloader_ctrl = DFU_MODE;
 		requested_mode = MODE_RESET;
 		break;
 
-	case UBERTOOTH_SPECAN:
+	case UbertoothCommand::SPECAN:
 		if (request_params[0] < 2049 || request_params[0] > 3072 ||
 				request_params[1] < 2049 || request_params[1] > 3072 ||
 				request_params[1] < request_params[0])
@@ -381,12 +378,12 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_RX_GENERIC:
+	case UbertoothCommand::RX_GENERIC:
 		requested_mode = MODE_RX_GENERIC;
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_LED_SPECAN:
+	case UbertoothCommand::LED_SPECAN:
 		if (request_params[0] > 256)
 			return 0;
 		rssi_threshold = 54 - request_params[0];
@@ -394,7 +391,7 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_GET_REV_NUM:
+	case UbertoothCommand::GET_REV_NUM:
 		data[0] = 0x00;
 		data[1] = 0x00;
 
@@ -406,29 +403,29 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 2 + 1 + length;
 		break;
 
-	case UBERTOOTH_GET_COMPILE_INFO:
+	case UbertoothCommand::GET_COMPILE_INFO:
 		length = (uint8_t)strlen(compile_info);
 		data[0] = length;
 		memcpy(&data[1], compile_info, length);
 		*data_len = 1 + length;
 		break;
 
-	case UBERTOOTH_GET_BOARD_ID:
+	case UbertoothCommand::GET_BOARD_ID:
 		data[0] = BOARD_ID;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_SQUELCH:
+	case UbertoothCommand::SET_SQUELCH:
 		cs_threshold_req = (int8_t)request_params[0];
 		cs_threshold_calc_and_set(channel);
 		break;
 
-	case UBERTOOTH_GET_SQUELCH:
+	case UbertoothCommand::GET_SQUELCH:
 		data[0] = cs_threshold_req;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_BDADDR:
+	case UbertoothCommand::SET_BDADDR:
 		target.address = 0;
 		target.syncword = 0;
 		for(int i=0; i < 8; i++) {
@@ -440,21 +437,21 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		precalc();
 		break;
 
-	case UBERTOOTH_START_HOPPING:
+	case UbertoothCommand::START_HOPPING:
 		clkn_offset = 0;
 		for(int i=0; i < 4; i++) {
 			clkn_offset <<= 8;
 			clkn_offset |= data[i];
 		}
-		hop_mode = HOP_BLUETOOTH;
+		hop_mode = HopMode::BLUETOOTH;
 		dma_discard = 1;
 		DIO_SSEL_SET;
 		clk100ns_offset = (data[4] << 8) | (data[5] << 0);
 		requested_mode = MODE_BT_FOLLOW;
 		break;
 
-	case UBERTOOTH_AFH:
-		hop_mode = HOP_AFH;
+	case UbertoothCommand::AFH:
+		hop_mode = HopMode::AFH;
 		requested_mode = MODE_AFH;
 
 		for(int i=0; i < 10; i++) {
@@ -464,17 +461,17 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		afh_enabled = 1;
 		break;
 
-	case UBERTOOTH_HOP:
+	case UbertoothCommand::HOP:
 		do_hop = 1;
 		break;
 
-	case UBERTOOTH_SET_CLOCK:
+	case UbertoothCommand::SET_CLOCK:
 		clock = data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24;
 		clkn = clock;
 		cs_threshold_calc_and_set(channel);
 		break;
 
-	case UBERTOOTH_SET_AFHMAP:
+	case UbertoothCommand::SET_AFHMAP:
 		for(int i=0; i < 10; i++) {
 			afh_map[i] = data[i];
 		}
@@ -482,7 +479,7 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 10;
 		break;
 
-	case UBERTOOTH_CLEAR_AFHMAP:
+	case UbertoothCommand::CLEAR_AFHMAP:
 		for(int i=0; i < 10; i++) {
 			afh_map[i] = 0;
 		}
@@ -490,7 +487,7 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 10;
 		break;
 
-	case UBERTOOTH_GET_CLOCK:
+	case UbertoothCommand::GET_CLOCK:
 		clock = clkn;
 		for(int i=0; i < 4; i++) {
 			data[i] = (clock >> (8*i)) & 0xff;
@@ -498,11 +495,11 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 4;
 		break;
 
-	case UBERTOOTH_TRIM_CLOCK:
+	case UbertoothCommand::TRIM_CLOCK:
 		clk100ns_offset = (data[0] << 8) | (data[1] << 0);
 		break;
 
-	case UBERTOOTH_FIX_CLOCK_DRIFT:
+	case UbertoothCommand::FIX_CLOCK_DRIFT:
 		clk_drift_ppm += (int16_t)(data[0] << 8) | (data[1] << 0);
 
 		// Too slow
@@ -523,34 +520,34 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 
 		break;
 
-	case UBERTOOTH_BTLE_SNIFFING:
+	case UbertoothCommand::BTLE_SNIFFING:
 		*data_len = 0;
 
 		do_hop = 0;
-		hop_mode = HOP_BTLE;
+		hop_mode = HopMode::BTLE;
 		requested_mode = MODE_BT_FOLLOW_LE;
 
 		queue_init();
 		cs_threshold_calc_and_set(channel);
 		break;
 
-	case UBERTOOTH_GET_ACCESS_ADDRESS:
+	case UbertoothCommand::GET_ACCESS_ADDRESS:
 		for(int i=0; i < 4; i++) {
 			data[i] = (le.access_address >> (8*i)) & 0xff;
 		}
 		*data_len = 4;
 		break;
 
-	case UBERTOOTH_SET_ACCESS_ADDRESS:
+	case UbertoothCommand::SET_ACCESS_ADDRESS:
 		le_set_access_address(data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24);
 		le.target_set = 1;
 		break;
 
-	case UBERTOOTH_DO_SOMETHING:
+	case UbertoothCommand::DO_SOMETHING:
 		// do something! just don't commit anything here
 		break;
 
-	case UBERTOOTH_DO_SOMETHING_REPLY:
+	case UbertoothCommand::DO_SOMETHING_REPLY:
 		// after you do something, tell me what you did!
 		// don't commit here please
 		data[0] = 0x13;
@@ -558,16 +555,16 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 2;
 		break;
 
-	case UBERTOOTH_GET_CRC_VERIFY:
+	case UbertoothCommand::GET_CRC_VERIFY:
 		data[0] = le.crc_verify ? 1 : 0;
 		*data_len = 1;
 		break;
 
-	case UBERTOOTH_SET_CRC_VERIFY:
+	case UbertoothCommand::SET_CRC_VERIFY:
 		le.crc_verify = request_params[0] ? 1 : 0;
 		break;
 
-	case UBERTOOTH_POLL:
+	case UbertoothCommand::POLL:
 		p = dequeue();
 		if (p != NULL) {
 			memcpy(data, (void *)p, sizeof(usb_pkt_rx));
@@ -578,35 +575,35 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		}
 		break;
 
-	case UBERTOOTH_BTLE_PROMISC:
+	case UbertoothCommand::BTLE_PROMISC:
 		*data_len = 0;
 
-		hop_mode = HOP_NONE;
+		hop_mode = HopMode::NONE;
 		requested_mode = MODE_BT_PROMISC_LE;
 
 		queue_init();
 		cs_threshold_calc_and_set(channel);
 		break;
 
-	case UBERTOOTH_READ_REGISTER:
+	case UbertoothCommand::READ_REGISTER:
 		reg_val = cc2400_get(request_params[0]);
 		data[0] = (reg_val >> 8) & 0xff;
 		data[1] = reg_val & 0xff;
 		*data_len = 2;
 		break;
 
-	case UBERTOOTH_WRITE_REGISTER:
+	case UbertoothCommand::WRITE_REGISTER:
 		cc2400_set(request_params[0] & 0xff, request_params[1]);
 		break;
 
-	case UBERTOOTH_WRITE_REGISTERS:
+	case UbertoothCommand::WRITE_REGISTERS:
 		for(i=0; i<request_params[0]; i++) {
 			reg_val = (data[(i*3)+1] << 8) | data[(i*3)+2];
 			cc2400_set(data[i*3], reg_val);
 		}
 		break;
 
-	case UBERTOOTH_READ_ALL_REGISTERS:
+	case UbertoothCommand::READ_ALL_REGISTERS:
 		#define MAX_READ_REG 0x2d
 		for(i=0; i<=MAX_READ_REG; i++) {
 			reg_val = cc2400_get(i);
@@ -617,7 +614,7 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = MAX_READ_REG*3;
 		break;
 
-	case UBERTOOTH_TX_GENERIC_PACKET:
+	case UbertoothCommand::TX_GENERIC_PACKET:
 		i = 7 + data[6];
 		memcpy(&tx_pkt, data, i);
 		//tx_pkt.channel = data[4] << 8 | data[5];
@@ -625,12 +622,12 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		*data_len = 0;
 		break;
 
-	case UBERTOOTH_BTLE_SLAVE:
+	case UbertoothCommand::BTLE_SLAVE:
 		memcpy(slave_mac_address, data, 6);
 		requested_mode = MODE_BT_SLAVE_LE;
 		break;
 
-	case UBERTOOTH_BTLE_SET_TARGET:
+	case UbertoothCommand::BTLE_SET_TARGET:
 		// Addresses appear in packets in reverse-octet order.
 		// Store the target address in reverse order so that we can do a simple memcmp later
 		le.target[0] = data[5];
@@ -643,18 +640,18 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 		break;
 
 #ifdef TX_ENABLE
-	case UBERTOOTH_JAM_MODE:
-		jam_mode = request_params[0];
+	case UbertoothCommand::JAM_MODE:
+		jam_mode = (JamMode)request_params[0];
 		break;
 #endif
 
-	case UBERTOOTH_EGO:
+	case UbertoothCommand::EGO:
 #ifndef TX_ENABLE
-		if (ego_mode == EGO_JAM)
+		if (ego_mode == EgoMode::JAM)
 			return 0;
 #endif
 		requested_mode = MODE_EGO;
-		ego_mode = (ego_mode_t)request_params[0];
+		ego_mode = (EgoMode)request_params[0];
 		break;
 
 	default:
@@ -676,17 +673,17 @@ void TIMER0_IRQHandler()
 		/* Trigger hop based on mode */
 
 		/* NONE or SWEEP -> 25 Hz */
-		if (hop_mode == HOP_NONE || hop_mode == HOP_SWEEP) {
+		if (hop_mode == HopMode::NONE || hop_mode == HopMode::SWEEP) {
 			if ((clkn & 0x7f) == 0)
 				do_hop = 1;
 		}
 		/* BLUETOOTH -> 1600 Hz */
-		else if (hop_mode == HOP_BLUETOOTH) {
+		else if (hop_mode == HopMode::BLUETOOTH) {
 			if ((clkn & 0x1) == 0)
 				do_hop = 1;
 		}
 		/* BLUETOOTH Low Energy -> 7.5ms - 4.0s in multiples of 1.25 ms */
-		else if (hop_mode == HOP_BTLE) {
+		else if (hop_mode == HopMode::BTLE) {
 			// Only hop if connected
 			if (le.link_state == LINK_CONNECTED && le_clk == 0) {
 				--le.interval_timer;
@@ -699,7 +696,7 @@ void TIMER0_IRQHandler()
 				}
 			}
 		}
-		else if (hop_mode == HOP_AFH) {
+		else if (hop_mode == HopMode::AFH) {
 			if( (last_hop + hop_timeout) == clkn ) {
 				do_hop = 1;
 			}
@@ -743,7 +740,7 @@ void EINT3_IRQHandler()
 	IO2IntClr   = PIN_GIO6; // clear interrupt
 	DIO_SSEL_CLR;           // enable SPI
 	cs_trigger  = 1;        // signal trigger
-	if (hop_mode == HOP_BLUETOOTH)
+	if (hop_mode == HopMode::BLUETOOTH)
 		dma_discard = 0;
 
 }
@@ -781,7 +778,7 @@ void DMA_IRQHandler()
 			if (DMACIntTCStat & (1 << 0)) {
 				DMACIntTCClear = (1 << 0);
 
-				if (hop_mode == HOP_BLUETOOTH)
+				if (hop_mode == HopMode::BLUETOOTH)
 					DIO_SSEL_SET;
 
 				idle_buf_clk100ns  = CLK100NS;
@@ -864,7 +861,7 @@ static void cc2400_idle()
 	rssi_reset();
 
 	/* hopping stuff */
-	hop_mode = HOP_NONE;
+	hop_mode = HopMode::NONE;
 	do_hop = 0;
 	channel = 2441;
 	hop_direct_channel = 0;
@@ -883,10 +880,10 @@ static void cc2400_idle()
 	/* operation mode */
 	mode = MODE_IDLE;
 	requested_mode = MODE_IDLE;
-	jam_mode = JAM_NONE;
-	ego_mode = EGO_FOLLOW;
+	jam_mode = JamMode::NONE;
+	ego_mode = EgoMode::FOLLOW;
 
-	modulation = MOD_BT_BASIC_RATE;
+	modulation = Modulation::BT_BASIC_RATE;
 
 	/* specan stuff */
 	low_freq = 2400;
@@ -904,10 +901,10 @@ static void cc2400_rx()
 {
 	uint16_t mdmctrl = 0;
 
-	if((modulation == MOD_BT_BASIC_RATE) || (modulation == MOD_BT_LOW_ENERGY)) {
-		if (modulation == MOD_BT_BASIC_RATE) {
+	if((modulation == Modulation::BT_BASIC_RATE) || (modulation == Modulation::BT_LOW_ENERGY)) {
+		if (modulation == Modulation::BT_BASIC_RATE) {
 			mdmctrl = 0x0029; // 160 kHz frequency deviation
-		} else if (modulation == MOD_BT_LOW_ENERGY) {
+		} else if (modulation == Modulation::BT_LOW_ENERGY) {
 			mdmctrl = 0x0040; // 250 kHz frequency deviation
 		}
 		cc2400_set(MANAND,  0x7fff);
@@ -944,7 +941,7 @@ static void cc2400_rx_sync(uint32_t sync)
 {
 	uint16_t grmdm, mdmctrl;
 
-	if (modulation == MOD_BT_BASIC_RATE) {
+	if (modulation == Modulation::BT_BASIC_RATE) {
 		mdmctrl = 0x0029; // 160 kHz frequency deviation
 		grmdm = 0x0461; // un-buffered mode, packet w/ sync word detection
 		// 0 00 00 1 000 11 0 00 0 1
@@ -955,7 +952,7 @@ static void cc2400_rx_sync(uint32_t sync)
 		//   |  +--------------------> un-buffered mode
 		//   +-----------------------> sync error bits: 0
 
-	} else if (modulation == MOD_BT_LOW_ENERGY) {
+	} else if (modulation == Modulation::BT_LOW_ENERGY) {
 		mdmctrl = 0x0040; // 250 kHz frequency deviation
 		grmdm = 0x0561; // un-buffered mode, packet w/ sync word detection
 		// 0 00 00 1 010 11 0 00 0 1
@@ -1033,9 +1030,9 @@ static void cc2400_tx_sync(uint32_t sync)
 	cc2400_set(FSDIV,   channel);
 	cc2400_set(FREND,   0b1011);    // amplifier level (-7 dBm, picked from hat)
 
-	if (modulation == MOD_BT_BASIC_RATE) {
+	if (modulation == Modulation::BT_BASIC_RATE) {
 		cc2400_set(MDMCTRL, 0x0029);    // 160 kHz frequency deviation
-	} else if (modulation == MOD_BT_LOW_ENERGY) {
+	} else if (modulation == Modulation::BT_LOW_ENERGY) {
 		cc2400_set(MDMCTRL, 0x0040);    // 250 kHz frequency deviation
 	} else {
 		/* oops */
@@ -1199,14 +1196,14 @@ void hop(void)
 	last_hop = clkn;
 
 	// No hopping, if channel is set correctly, do nothing
-	if (hop_mode == HOP_NONE) {
+	if (hop_mode == HopMode::NONE) {
 		if (cc2400_get(FSDIV) == (channel - 1))
 			return;
 	}
 	/* Slow sweep (100 hops/sec)
 	 * only hop to currently used channels if AFH is enabled
 	 */
-	else if (hop_mode == HOP_SWEEP) {
+	else if (hop_mode == HopMode::SWEEP) {
 		do {
 			channel += 32;
 			if (channel > 2480)
@@ -1217,7 +1214,7 @@ void hop(void)
 	/* AFH detection
 	 * only hop to currently unused channesl
 	 */
-	else if (hop_mode == HOP_AFH) {
+	else if (hop_mode == HopMode::AFH) {
 		do {
 			channel += 32;
 			if (channel > 2480)
@@ -1225,15 +1222,15 @@ void hop(void)
 		} while( used_channels != 79 && (afh_map[(channel-2402)/8] & 0x1<<((channel-2402)%8)) );
 	}
 
-	else if (hop_mode == HOP_BLUETOOTH) {
+	else if (hop_mode == HopMode::BLUETOOTH) {
 		channel = next_hop(clkn);
 	}
 
-	else if (hop_mode == HOP_BTLE) {
+	else if (hop_mode == HopMode::BTLE) {
 		channel = btle_next_hop(&le);
 	}
 
-	else if (hop_mode == HOP_DIRECT) {
+	else if (hop_mode == HopMode::DIRECT) {
 		channel = hop_direct_channel;
 	}
 	/* IDLE mode, but leave amp on, so don't call cc2400_idle(). */
@@ -1247,7 +1244,7 @@ void hop(void)
 		cc2400_set(FSDIV, channel - 1);
 
 	/* Update CS register if hopping.  */
-	if (hop_mode > 0) {
+	if (hop_mode != HopMode::NONE) {
 		cs_threshold_calc_and_set(channel);
 	}
 
@@ -1347,7 +1344,7 @@ void bt_stream_rx()
 			status |= RSSI_TRIGGER;
 		}
 
-		enqueue(BR_PACKET, (uint8_t*)idle_rxbuf);
+		enqueue(PacketType::BR_PACKET, (uint8_t*)idle_rxbuf);
 
 		handle_usb(clkn);
 		rx_tc = 0;
@@ -1481,7 +1478,7 @@ void bt_generic_le(uint8_t active_mode)
 	int i, j;
 	int8_t rssi, rssi_at_trigger;
 
-	modulation = MOD_BT_LOW_ENERGY;
+	modulation = Modulation::BT_LOW_ENERGY;
 	mode = active_mode;
 
 	reset_le();
@@ -1610,7 +1607,14 @@ void bt_le_sync(uint8_t active_mode)
 	int8_t rssi;
 	static int restart_jamming = 0;
 
-	modulation = MOD_BT_LOW_ENERGY;
+	uint32_t packet[48/4+1] = { 0, };
+	uint8_t* p = (uint8_t*)packet;
+	const uint32_t* whit = whitening_word[btle_channel_index(channel-2402)];
+
+	size_t len;
+	size_t total_transfers;
+
+	modulation = Modulation::BT_LOW_ENERGY;
 	mode = active_mode;
 
 	le.link_state = LINK_LISTENING;
@@ -1683,13 +1687,13 @@ void bt_le_sync(uint8_t active_mode)
 			packet[i/4+1] = rbit(v) ^ whit[i/4];
 		}
 
-		unsigned len = (p[5] & 0x3f) + 2;
+		len = (p[5] & 0x3f) + 2;
 		if (len > 39)
 			goto rx_flush;
 
 		// transfer the minimum number of bytes from the CC2400
 		// this allows us enough time to resume RX for subsequent packets on the same channel
-		unsigned total_transfers = ((len + 3) + 4 - 1) / 4;
+		total_transfers = ((len + 3) + 4 - 1) / 4;
 		if (total_transfers < 11) {
 			while (DMACC0DestAddr < (uint32_t)rxbuf1 + 4 * total_transfers && rx_err == 0)
 				;
@@ -1713,7 +1717,7 @@ void bt_le_sync(uint8_t active_mode)
 
 		if (le.crc_verify) {
 			uint32_t calc_crc = btle_crcgen_lut(le.crc_init_reversed, p + 4, len);
-			uint32_z wire_crc = (p[4+len+2] << 16)
+			uint32_t wire_crc = (p[4+len+2] << 16)
 			                  | (p[4+len+1] << 8)
 			                  | (p[4+len+0] << 0);
 			if (calc_crc != wire_crc) // skip packets with a bad CRC
@@ -1726,7 +1730,7 @@ void bt_le_sync(uint8_t active_mode)
 
 		// disable USB interrupts while we touch USB data structures
 		ICER0 = ICER0_ICE_USB;
-		enqueue(LE_PACKET, (uint8_t *)packet);
+		enqueue(PacketType::LE_PACKET, (uint8_t *)packet);
 		ISER0 = ISER0_ISE_USB;
 
 		le.last_packet = CLK100NS;
@@ -1755,8 +1759,8 @@ void bt_le_sync(uint8_t active_mode)
 			le_jam_count = 0;
 			TXLED_CLR;
 
-			if (jam_mode == JAM_ONCE) {
-				jam_mode = JAM_NONE;
+			if (jam_mode == JamMode::ONCE) {
+				jam_mode = JamMode::NONE;
 				requested_mode = MODE_IDLE;
 				goto cleanup;
 			}
@@ -1860,7 +1864,7 @@ int cb_follow_le(char* unused __attribute__((unused))) {
 			}
 
 			// send to PC
-			enqueue(LE_PACKET, (uint8_t*)idle_rxbuf);
+			enqueue(PacketType::LE_PACKET, (uint8_t*)idle_rxbuf);
 			RXLED_SET;
 
 			packet_cb((uint8_t*)idle_rxbuf);
@@ -1884,11 +1888,9 @@ void connection_follow_cb(uint8_t *packet) {
 #define DATA_LEN_IDX 5
 #define DATA_START_IDX 6
 
-	uint8_t *adv_addr = &packet[ADV_ADDRESS_IDX];
 	uint8_t header = packet[HEADER_IDX];
 	uint8_t *data_len = &packet[DATA_LEN_IDX];
 	uint8_t *data = &packet[DATA_START_IDX];
-	uint8_t *crc = &packet[DATA_START_IDX + *data_len];
 
 	if (le.link_state == LINK_CONN_PENDING) {
 		// We received a packet in the connection pending state, so now the device *should* be connected
@@ -1899,7 +1901,7 @@ void connection_follow_cb(uint8_t *packet) {
 		le.update_pending = 0;
 
 		// hue hue hue
-		if (jam_mode != JAM_NONE)
+		if (jam_mode != JamMode::NONE)
 			le_jam_count = JAM_COUNT_DEFAULT;
 
 	} else if (le.link_state == LINK_CONNECTED) {
@@ -2004,7 +2006,7 @@ void le_promisc_state(uint8_t type, void *data, unsigned len) {
 
 	buf[0] = type;
 	memcpy(&buf[1], data, len);
-	enqueue(LE_PROMISC, (uint8_t*)buf);
+	enqueue(PacketType::LE_PROMISC, (uint8_t*)buf);
 }
 
 // divide, rounding to the nearest integer: round up at 0.5.
@@ -2034,11 +2036,11 @@ void promisc_recover_hop_increment(uint8_t* packet __attribute__((unused))) {
 			le.channel_idx = (1 + le.channel_increment) % 37;
 			le.link_state = LINK_CONNECTED;
 			le.crc_verify = 0;
-			hop_mode = HOP_BTLE;
+			hop_mode = HopMode::BTLE;
 			packet_cb = connection_follow_cb;
 			le_promisc_state(3, &le.channel_increment, 1);
 
-			if (jam_mode != JAM_NONE)
+			if (jam_mode != JamMode::NONE)
 				le_jam_count = JAM_COUNT_DEFAULT;
 
 			return;
@@ -2076,7 +2078,7 @@ void promisc_recover_hop_interval(uint8_t *packet __attribute__((unused))) {
 		if (le_promisc.consec_intervals == 5) {
 			packet_cb = promisc_recover_hop_increment;
 			hop_direct_channel = 2404;
-			hop_mode = HOP_DIRECT;
+			hop_mode = HopMode::DIRECT;
 			do_hop = 1;
 			le_promisc_state(2, &le.conn_interval, 2);
 		}
@@ -2202,7 +2204,7 @@ int cb_le_promisc(char *unpacked) {
 		            | (idle_rxbuf[0]);
 		see_aa(aa);
 
-		enqueue(LE_PACKET, (uint8_t*)idle_rxbuf);
+		enqueue(PacketType::LE_PACKET, (uint8_t*)idle_rxbuf);
 
 	}
 
@@ -2325,7 +2327,7 @@ void rx_generic_sync(void) {
 		USRLED_SET;
 
 		cc2400_fifo_read(len, buf+4);
-		enqueue(BR_PACKET, buf);
+		enqueue(PacketType::BR_PACKET, buf);
 		handle_usb(clkn);
 	}
 }
@@ -2335,7 +2337,7 @@ void rx_generic(void) {
 	if(cc2400_get(GRMDM) && 0x0400) {
 		rx_generic_sync();
 	} else {
-		modulation = MOD_NONE;
+		modulation = Modulation::NONE;
 		bt_stream_rx();
 	}
 }
@@ -2424,7 +2426,7 @@ void specan()
 			buf[(3 * i) + 2] = cc2400_get(RSSI) >> 8;
 			i++;
 			if (i == 16) {
-				enqueue(SPECAN, buf);
+				enqueue(PacketType::SPECAN, buf);
 				i = 0;
 
 				handle_usb(clkn);

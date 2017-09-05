@@ -63,14 +63,14 @@ protected:
 	static void show_libusb_error(int error_code);
 	static void cmd_callback(struct libusb_transfer* transfer);
 	int cmd_sync(uint8_t type,
-	             Command command,
+	             UbertoothCommand command,
 	             uint16_t wValue,
 	             uint16_t wIndex,
 	             uint8_t* data,
 	             uint16_t size,
 	             unsigned int timeout);
 	int cmd_async(uint8_t type,
-	              Command command,
+	              UbertoothCommand command,
 	              uint16_t wValue,
 	              uint16_t wIndex,
 	              uint8_t* data,
@@ -137,7 +137,6 @@ public:
 	int cmd_ego(int mode);
 	int cmd_afh();
 	void cmd_hop();
-
 };
 
 #endif /* __UBERTOOTH_H__ */

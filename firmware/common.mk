@@ -81,9 +81,6 @@ LPCUSB_TARGET = LPC17xx
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
-# Output Directory
-OUTDIR = .
-
 # Library paths
 LIBS_PATH = ../common
 LPCUSB_PATH = $(LIBS_PATH)/lpcusb/target
@@ -111,7 +108,7 @@ OPT = s
 DEBUG = dwarf-2 -g3
 
 # Linker Script for the current MCU
-LINKER_SCRIPT ?= LPC17xx_Linker_Script_with_bootloader.ld
+LINKER_SCRIPT = LPC17xx_Linker_Script_with_bootloader.ld
 
 # List any extra directories to look for include files here.
 #     Each directory must be seperated by a space.
@@ -129,16 +126,16 @@ CSTANDARD = -std=gnu99
 CPPSTANDARD = -std=c++11
 
 # Place -D or -U options here for C sources
-CDEFS  = -D$(LPCUSB_TARGET) $(UBERTOOTH_OPTS) $(COMPILE_OPTS) -Wa,-a,-ad
+CDEFS  = $(UBERTOOTH_OPTS) -D$(LPCUSB_TARGET) $(COMPILE_OPTS) -Wa,-a,-ad
 
 # Place -D or -U options here for ASM sources
 ADEFS =
 
 # Place -D or -U options here for C++ sources
-CPPDEFS = -D$(LPCUSB_TARGET) $(UBERTOOTH_OPTS) $(COMPILE_OPTS)
+CPPDEFS = $(UBERTOOTH_OPTS) -D$(LPCUSB_TARGET) $(COMPILE_OPTS)
 
 #---------------- Compiler Options C ----------------
-#  -g:          generate debugging information
+#  -g*:          generate debugging information
 #  -O*:          optimization level
 #  -f...:        tuning, see GCC manual
 #  -Wall...:     warning level
@@ -192,9 +189,13 @@ CPPFLAGS += -O$(OPT)
 #CPPFLAGS += -funsigned-bitfields
 #CPPFLAGS += -fpack-struct
 #CPPFLAGS += -fshort-enums
-#CPPFLAGS += -fno-exceptions
+CPPFLAGS += -fno-exceptions
+CPPFLAGS += -fno-rtti
+CPPFLAGS += -fno-threadsafe-statics
 CPPFLAGS += -Wall
-#CPPFLAGS += -Wundef
+CPPFLAGS += -Wextra
+CPPFLAGS += -Weffc++
+#CFLAGS += -Wundef
 #CPPFLAGS += -mshort-calls
 #CPPFLAGS += -fno-unit-at-a-time
 #CPPFLAGS += -Wstrict-prototypes
@@ -202,12 +203,7 @@ CPPFLAGS += -Wall
 #CPPFLAGS += -Wsign-compare
 CPPFLAGS += -Wa,-alhms=$(<:%.cpp=$(OBJDIR)/%.lst)
 CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
-CPPFLAGS += $(CPPSTANDARD)
-CPPFLAGS += -fno-exceptions
-CPPFLAGS += -fno-rtti
-CPPFLAGS += -fno-threadsafe-statics
-CPPFLAGS += -Wextra
-CPPFLAGS += -Weffc++
+#CPPFLAGS += $(CSTANDARD)
 CPPFLAGS += $(GIT_REVISION)
 CPPFLAGS += $(COMPILE_BY)
 CPPFLAGS += $(COMPILE_HOST)
@@ -235,12 +231,12 @@ EXTRALIBDIRS = $(LIBS_PATH)
 #    --cref:    add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map
 #LDFLAGS += -Wl,--relax
-LDFLAGS += -Wl,--gc-sections
+#LDFLAGS += --gc-sections
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
 LDFLAGS += -static
 LDFLAGS += -Wl,--start-group
 #LDFLAGS += -L$(THUMB2GNULIB) -L$(THUMB2GNULIB2)
-LDFLAGS += -lc -lg
+LDFLAGS += -lc -lg -lstdc++ -lsupc++
 LDFLAGS += -lgcc -lm
 LDFLAGS += -Wl,--end-group
 

@@ -75,7 +75,7 @@
 #define CLK_TUNE_TIME   2250
 #define CLK_TUNE_OFFSET  200
 
-enum class Command : uint8_t {
+enum class UbertoothCommand : uint8_t {
 	PING               = 0,
 	RX_SYMBOLS         = 1,
 	TX_SYMBOLS         = 2,
@@ -161,7 +161,7 @@ enum class Modulation : uint8_t {
 	NONE           = 3
 };
 
-enum class PktType : uint8_t {
+enum class PacketType : uint8_t {
 	BR_PACKET  = 0,
 	LE_PACKET  = 1,
 	MESSAGE    = 2,
@@ -180,7 +180,7 @@ enum class HopMode : uint8_t {
 	AFH       = 5,
 };
 
-enum class PacketStatus : uint8_t {
+enum PacketStatus {
 	DMA_OVERFLOW  = 0x01,
 	DMA_ERROR     = 0x02,
 	FIFO_OVERFLOW = 0x04,
@@ -193,7 +193,7 @@ enum class PacketStatus : uint8_t {
  * USB packet for Bluetooth RX (64 total bytes)
  */
 typedef struct {
-	uint8_t  pkt_type;
+	PacketType pkt_type;
 	uint8_t  status;
 	uint8_t  channel;
 	uint8_t  clkn_high;

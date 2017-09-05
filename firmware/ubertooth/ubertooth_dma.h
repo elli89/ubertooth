@@ -24,6 +24,7 @@
 
 #include "inttypes.h"
 #include "ubertooth.h"
+#include "ubertooth_interface.h"
 
 extern volatile uint8_t rxbuf1[DMA_SIZE];
 extern volatile uint8_t rxbuf2[DMA_SIZE];

@@ -20,6 +20,7 @@
  */
 
 #include "ego.h"
+#include <cstdlib>
 
 /*
  * This code performs several functions related to the Yuneec E-GO electric
@@ -30,7 +31,7 @@
  *  - jamming
  */
 
-int enqueue_with_ts(uint8_t type, uint8_t *buf, uint32_t ts);
+int enqueue_with_ts(PacketType type, uint8_t* buf, uint32_t ts);
 #define CLK100NS (3125*(clkn & 0xfffff) + T0TC)
 extern volatile uint32_t clkn; // TODO: replace with timer1
 extern volatile uint8_t requested_mode;
@@ -38,17 +39,17 @@ extern volatile uint16_t channel;
 
 static const uint16_t channels[4] = { 2408, 2418, 2423, 2469 };
 
-typedef enum _ego_state_t {
-	EGO_ST_INIT = 0,
-	EGO_ST_START_RX,
-	EGO_ST_CAP,
-	EGO_ST_SLEEP,
-	EGO_ST_START_JAMMING,
-	EGO_ST_JAMMING,
-} ego_state_t;
+enum class EgoState : size_t {
+	INIT = 0,
+	START_RX = 1,
+	CAP = 2,
+	SLEEP = 3,
+	START_JAMMING = 4,
+	JAMMING = 5,
+};
 
-typedef struct _ego_fsm_state_t {
-	ego_state_t state;
+typedef struct {
+	EgoState state;
 	int channel_index;
 	uint32_t sleep_start;
 	uint32_t sleep_duration;
@@ -173,12 +174,12 @@ static void nop_state(ego_fsm_state_t *state __attribute__((unused))) {
 static void init_state(ego_fsm_state_t *state) {
 	state->channel_index = 0;
 	channel = channels[state->channel_index];
-	state->state = EGO_ST_START_RX;
+	state->state = EgoState::START_RX;
 }
 
 static void start_rf_state(ego_fsm_state_t *state) {
 	rf_on();
-	state->state = EGO_ST_CAP;
+	state->state = EgoState::CAP;
 }
 
 static void cap_state(ego_fsm_state_t *state) {
@@ -187,21 +188,21 @@ static void cap_state(ego_fsm_state_t *state) {
 
 	if (sleep_elapsed(state)) {
 		sleep_ms(state, 4);
-		state->state = EGO_ST_SLEEP;
+		state->state = EgoState::SLEEP;
 	}
 
 	if (sync_received()) {
 		RXLED_SET;
 		do_rx(&packet);
-		enqueue_with_ts(EGO_PACKET, packet.rxbuf, packet.rxtime);
+		enqueue_with_ts(PacketType::EGO_PACKET, packet.rxbuf, packet.rxtime);
 		RXLED_CLR;
 
 		sleep_ms(state, 6);
-		state->state = EGO_ST_SLEEP;
+		state->state = EgoState::SLEEP;
 	}
 
 	// kill RF on state change
-	if (state->state != EGO_ST_CAP) {
+	if (state->state != EgoState::CAP) {
 		cc2400_strobe(SRFOFF);
 		ssp_stop();
 		state->timer_active = 1;
@@ -218,13 +219,13 @@ static void sleep_state(ego_fsm_state_t *state) {
 		sleep_ms(state, 7);
 		state->timer_active = 1;
 
-		state->state = EGO_ST_START_RX;
+		state->state = EgoState::START_RX;
 	}
 }
 
 // continuous cap states (reuses START_RX state)
 static void continuous_init_state(ego_fsm_state_t *state) {
-	state->state = EGO_ST_START_RX;
+	state->state = EgoState::START_RX;
 }
 
 static void continuous_cap_state(ego_fsm_state_t *state __attribute__((unused))) {
@@ -234,7 +235,7 @@ static void continuous_cap_state(ego_fsm_state_t *state __attribute__((unused)))
 	if (sync_received()) {
 		RXLED_SET;
 		do_rx(&packet);
-		enqueue_with_ts(EGO_PACKET, packet.rxbuf, packet.rxtime);
+		enqueue_with_ts(PacketType::EGO_PACKET, packet.rxbuf, packet.rxtime);
 		RXLED_CLR;
 
 		// restart cap with radio warm
@@ -248,18 +249,18 @@ static void continuous_cap_state(ego_fsm_state_t *state __attribute__((unused)))
 // jammer states
 static void jam_cap_state(ego_fsm_state_t *state) {
 	if (sync_received()) {
-		state->state = EGO_ST_START_JAMMING;
+		state->state = EgoState::START_JAMMING;
 		state->packet_observed = 1;
 		state->anchor = CLK100NS;
 	}
 	if (state->timer_active && sleep_elapsed(state)) {
-		state->state = EGO_ST_START_JAMMING;
+		state->state = EgoState::START_JAMMING;
 		state->packet_observed = 0;
 		sleep_ms(state, 11); // 11 ms hop interval
 	}
 
 	// state changed, kill radio
-	if (state->state != EGO_ST_CAP) {
+	if (state->state != EgoState::CAP) {
 		cc2400_strobe(SRFOFF);
 		ssp_stop();
 	}
@@ -297,7 +298,7 @@ static void start_jamming_state(ego_fsm_state_t *state) {
 	TXLED_SET;
 #endif
 
-	state->state = EGO_ST_JAMMING;
+	state->state = EgoState::JAMMING;
 	sleep_ms_anchor(state, 2);
 }
 
@@ -313,24 +314,24 @@ void jamming_state(ego_fsm_state_t *state) {
 		state->channel_index = (state->channel_index + 1) % 4;
 		channel = channels[state->channel_index];
 
-		state->state = EGO_ST_SLEEP;
+		state->state = EgoState::SLEEP;
 		sleep_ms_anchor(state, 6);
 	}
 }
 
 static void jam_sleep_state(ego_fsm_state_t *state) {
 	if (sleep_elapsed(state)) {
-		state->state = EGO_ST_START_RX;
+		state->state = EgoState::START_RX;
 		state->timer_active = 1;
 		sleep_ms_anchor(state, 11);
 	}
 }
 
-void ego_main(ego_mode_t mode) {
+void ego_main(EgoMode mode) {
 	const ego_st_handler *handler; // set depending on mode
 	ego_fsm_state_t state;
 
-	state.state = EGO_ST_INIT;
+	state.state = EgoState::INIT;
 	state.channel_index = 0;
 	state.timer_active = 0;
 
@@ -366,14 +367,14 @@ void ego_main(ego_mode_t mode) {
 	};
 
 	switch (mode) {
-		case EGO_FOLLOW:
+		case EgoMode::FOLLOW:
 			handler = follow_handler;
 			break;
-		case EGO_CONTINUOUS_RX:
+		case EgoMode::CONTINUOUS_RX:
 			handler = continuous_rx_handler;
 			break;
 #ifdef TX_ENABLE
-		case EGO_JAM:
+		case EgoMode::JAM:
 			handler = jam_handler;
 			break;
 #endif
@@ -387,7 +388,7 @@ void ego_main(ego_mode_t mode) {
 	while (1) {
 		if (requested_mode != MODE_EGO)
 			break;
-		handler[state.state](&state);
+		handler[(size_t)(state.state)](&state);
 	}
 
 	ego_deinit();

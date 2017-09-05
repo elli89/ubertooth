@@ -24,6 +24,7 @@
 #define __BLUETOOTH_H
 
 #include "ubertooth.h"
+#include "ubertooth_interface.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>

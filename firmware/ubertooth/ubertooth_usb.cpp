@@ -47,9 +47,11 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+extern "C" {
 #include "usbapi.h"
 #include "usbhw_lpc.h"
-#include "ubertooth.h"
+}
+#include <ubertooth.h>
 #include "ubertooth_usb.h"
 #include <string.h>
 
@@ -321,9 +323,9 @@ int dequeue_send(uint32_t clkn)
 		return 1;
 	} else {
 		if (clkn - last_usb_pkt > USB_KEEP_ALIVE) {
-			uint8_t pkt_type = KEEP_ALIVE;
+			PacketType pkt_type = PacketType::KEEP_ALIVE;
 			last_usb_pkt = clkn;
-			USBHwEPWrite(BULK_IN_EP, &pkt_type, 1);
+			USBHwEPWrite(BULK_IN_EP, (uint8_t*)(&pkt_type), 1);
 		}
 		return 0;
 	}

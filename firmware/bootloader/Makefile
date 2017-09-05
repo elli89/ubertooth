@@ -62,9 +62,6 @@ LPCUSB_TARGET = LPC17xx
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
-# Output Directory
-OUTDIR = .
-
 # Target file name (without extension).
 TARGET = bootloader
 
@@ -119,7 +116,7 @@ EXTRAINCDIRS = $(LIBS_PATH) $(LPCUSB_PATH) ../../host/libubertooth/src
 
 # Compiler flag to set the C Standard level.
 #     c89   = "ANSI" C
-#     gnuint8_t9 = c89 plus GCC extensions
+#     gnu89 = c89 plus GCC extensions
 #     c99   = ISO C99 standard (not yet fully implemented)
 #     gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=gnu99

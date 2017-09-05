@@ -72,7 +72,7 @@ uint16_t btle_channel_index_to_phys(uint8_t idx) {
 //		bytes in packet will be:
 //		  { 0x6e, 0xf4, 0x6f }
 //
-uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, int len) {
+uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, size_t len) {
 	uint32_t state = crc_init & 0xffffff;
 	uint32_t lfsr_mask = 0x5a6000; // 010110100110000000000000
 	int i, j;
@@ -98,7 +98,7 @@ uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, int len) {
 //	crc should be big endian
 //	the return will be big endian
 //
-uint32_t btle_reverse_crc(uint32_t crc, uint8_t *data, int len) {
+uint32_t btle_reverse_crc(uint32_t crc, uint8_t *data, size_t len) {
 	uint32_t state = crc;
 	uint32_t lfsr_mask = 0xb4c000; // 101101001100000000000000
 	uint32_t ret;
@@ -164,14 +164,11 @@ uint32_t btle_crc_lut[256] = {
  * Arguments: CRCInit, pointer to start of packet, length of packet in
  * bytes
  * */
-uint32_t btle_crcgen_lut(uint32_t crc_init, uint8_t *data, int len) {
-	uint32_t state;
-	int i;
-	uint8_t key;
-
-	state = crc_init & 0xffffff;
-	for (i = 0; i < len; ++i) {
-		key = data[i] ^ (state & 0xff);
+uint32_t btle_crcgen_lut(uint32_t crc_init, uint8_t *data, size_t len)
+{
+	uint32_t state = crc_init & 0xffffff;
+	for (size_t i = 0; i < len; ++i) {
+		uint8_t key = data[i] ^ (state & 0xff);
 		state = (state >> 8) ^ btle_crc_lut[key];
 	}
 	return state;

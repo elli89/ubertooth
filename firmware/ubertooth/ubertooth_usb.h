@@ -50,7 +50,6 @@
 #ifndef __UBERTOOTH_USB_H
 #define __UBERTOOTH_USB_H
 
-#include "ubertooth.h"
 #include "ubertooth_interface.h"
 
 typedef int (VendorRequestHandler)(uint8_t request, uint16_t *request_params, uint8_t *data, int *data_len);
