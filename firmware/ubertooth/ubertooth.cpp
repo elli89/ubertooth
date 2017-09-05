@@ -660,7 +660,7 @@ static int vendor_request_handler(uint8_t request, uint16_t* request_params, uin
 }
 
 /* Update CLKN. */
-void TIMER0_IRQHandler()
+extern "C" void TIMER0_IRQHandler()
 {
 	if (T0IR & TIR_MR0_Interrupt) {
 
@@ -733,7 +733,7 @@ void TIMER0_IRQHandler()
 
 /* EINT3 handler is also defined in ubertooth.c for TC13BADGE. */
 #ifndef TC13BADGE
-void EINT3_IRQHandler()
+extern "C" void EINT3_IRQHandler()
 {
 	/* TODO - check specific source of shared interrupt */
 	IO2IntClr   = PIN_GIO6; // clear interrupt
@@ -763,7 +763,7 @@ static void msleep(uint32_t millis)
 	}
 }
 
-void DMA_IRQHandler()
+extern "C" void DMA_IRQHandler()
 {
 	if ( mode == MODE_RX_SYMBOLS
 	   || mode == MODE_SPECAN
@@ -915,7 +915,7 @@ static void cc2400_rx()
 		//      |  | |   +-----------> sync word: 8 MSB bits of SYNC_WORD
 		//      |  | +---------------> 2 preamble bytes of 01010101
 		//      |  +-----------------> not packet mode
-			//      +--------------------> un-buffered mode
+		//      +--------------------> un-buffered mode
 		cc2400_set(FSDIV,   channel - 1); // 1 MHz IF
 		cc2400_set(MDMCTRL, mdmctrl);
 	}

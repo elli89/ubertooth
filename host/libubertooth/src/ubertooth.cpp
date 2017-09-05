@@ -34,6 +34,7 @@ void Ubertooth::start()
 void Ubertooth::stop()
 {
 	source->stop();
+	cmd_stop();
 }
 
 usb_pkt_rx Ubertooth::receive()

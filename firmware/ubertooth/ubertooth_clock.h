@@ -19,8 +19,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef __UBERTOOTH_CLOCK_H
-#define __UBERTOOTH_CLOCK_H value
+#pragma once
 
 #include "inttypes.h"
 
@@ -51,5 +50,3 @@ extern volatile uint32_t clkn_next_drift_fix;
 void clkn_stop();
 void clkn_start();
 void clkn_init();
-
-#endif
