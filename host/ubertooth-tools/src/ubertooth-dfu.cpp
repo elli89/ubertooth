@@ -69,7 +69,7 @@ static int check_suffix(const std::string& filename)
 	// We only know about dfu version 1.0/1.1
 	// This needs to be smarter to support other versions if/when they exist
 	if((suffix.bcdDFU != 0x0100) && (suffix.bcdDFU != 0x0101)) {
-		std::cerr << "Unknown DFU version: %04x\n", suffix.bcdDFU;
+		std::cerr << "Unknown DFU version: " << suffix.bcdDFU << std::endl;
 		signedfile.close();
 		return 1;
 	}
@@ -90,7 +90,7 @@ static int check_suffix(const std::string& filename)
 	uint32_t crc = crc32(data, data_length);
 	delete[] data;
 	if(crc != suffix.dwCRC) {
-		std::cerr << "CRC mismatch: calculated: 0x%x, found: 0x%x\n", crc, suffix.dwCRC;
+		std::cerr << "CRC mismatch: calculated: " << std::hex << crc << ", found: " << suffix.dwCRC << std::endl;
 		signedfile.close();
 		return 1;
 	}
@@ -154,7 +154,9 @@ int main(int argc, char** argv) {
 	std::string downfile_name;
 	std::string upfile_name;
 	std::string infile_name;
-	bool upload, download, reset = false;
+	bool upload = false;
+	bool download = false;
+	bool reset = false;
 	int opt, ubertooth_device = -1;
 
 	int rv;

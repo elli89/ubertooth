@@ -22,20 +22,20 @@
 #pragma once
 
 
-#if defined __MACH__
-#include <CoreServices/CoreServices.h>
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-#define htobe32 EndianU32_NtoB
-#define be32toh EndianU32_BtoN
-#define le32toh EndianU32_LtoN
-#define htobe64 EndianU64_NtoB
-#define be64toh EndianU64_BtoN
-#define htole16 EndianU16_NtoL
-#define htole32 EndianU32_NtoL
-#else
-#include <endian.h>
-#endif
+// #if defined __MACH__
+// #include <CoreServices/CoreServices.h>
+// #include <mach/mach.h>
+// #include <mach/mach_time.h>
+// #define htobe32 EndianU32_NtoB
+// #define be32toh EndianU32_BtoN
+// #define le32toh EndianU32_LtoN
+// #define htobe64 EndianU64_NtoB
+// #define be64toh EndianU64_BtoN
+// #define htole16 EndianU16_NtoL
+// #define htole32 EndianU32_NtoL
+// #else
+// #include <endian.h>
+// #endif
 
 #include <cstdint>
 #include <cstdlib>
@@ -128,7 +128,7 @@ enum class UbertoothCommand : uint8_t {
 	AFH                = 61,
 	HOP                = 62,
 	TRIM_CLOCK         = 63,
-	// GET_API_VERSION    = 64,
+	GET_API_VERSION    = 64,
 	WRITE_REGISTERS    = 65,
 	READ_ALL_REGISTERS = 66,
 	RX_GENERIC         = 67,

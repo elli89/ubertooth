@@ -44,7 +44,7 @@ protected:
 	bool stop_ubertooth = true;
 
 public:
-	Ubertooth();
+	Ubertooth() : BasicUbertooth() {};
 	Ubertooth(int ubertooth_device);
 
 	~Ubertooth();

@@ -28,7 +28,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules
 set(MAJOR_VERSION 1 CACHE INT "libUbertooth major version number")
 set(MINOR_VERSION 0 CACHE INT "libUbertooth minor version number")
 set( VERSION ${MAJOR_VERSION}.${MINOR_VERSION} )
-add_definitions( -DVERSION="${VERSION}" )
+add_definitions( -DVERSION="${VERSION}" -Ofast -std=c++11 -Wall -Wextra -Wunused -pipe)
 
 # Comment the following out for releases.
 set(CMAKE_C_FLAGS "$ENV{CFLAGS}" CACHE STRING "C Flags")

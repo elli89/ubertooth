@@ -29,6 +29,7 @@ set(cpp_sources ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth.cpp
                 # ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_callback.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_control.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/packetsource_ubertooth.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/sighandler.cpp
                 CACHE INTERNAL "List of CPP sources")
 set(cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/dfu_ubertooth.h
@@ -36,6 +37,7 @@ set(cpp_headers ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth.h
                 # ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_callback.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/packetsource.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/packetsource_ubertooth.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/sighandler.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/dfu_interface.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/ubertooth_interface.h
                 CACHE INTERNAL "List of CPP headers")
@@ -51,7 +53,6 @@ if( ${BUILD_SHARED_LIB} )
 	# Shared library
 	message(STATUS "Building shared library")
 	add_library(ubertooth SHARED ${cpp_sources})
-	target_compile_features(ubertooth PRIVATE cxx_range_for)
 	target_link_libraries(ubertooth ${LIBUBERTOOTH_LIBS})
 	set_target_properties(ubertooth PROPERTIES VERSION ${MAJOR_VERSION}.${MINOR_VERSION} SOVERSION 1)
 	set_target_properties(ubertooth PROPERTIES CLEAN_DIRECT_OUTPUT 1)

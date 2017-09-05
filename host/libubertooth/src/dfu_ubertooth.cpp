@@ -128,6 +128,8 @@ int DfuUbertooth::enter_dfu_mode() {
 			case DfuState::DFU_ERROR:
 				cmd_clear_status();
 				break;
+			case DfuState::DFU_IDLE:
+				break;
 		}
 	}
 	return 0;
