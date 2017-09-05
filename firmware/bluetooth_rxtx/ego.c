@@ -30,11 +30,11 @@
  *  - jamming
  */
 
-int enqueue_with_ts(u8 type, u8 *buf, u32 ts);
+int enqueue_with_ts(uint8_t type, uint8_t *buf, uint32_t ts);
 #define CLK100NS (3125*(clkn & 0xfffff) + T0TC)
-extern volatile u32 clkn; // TODO: replace with timer1
-extern volatile u8 requested_mode;
-extern volatile u16 channel;
+extern volatile uint32_t clkn; // TODO: replace with timer1
+extern volatile uint8_t requested_mode;
+extern volatile uint16_t channel;
 
 static const uint16_t channels[4] = { 2408, 2418, 2423, 2469 };
 
@@ -50,21 +50,21 @@ typedef enum _ego_state_t {
 typedef struct _ego_fsm_state_t {
 	ego_state_t state;
 	int channel_index;
-	u32 sleep_start;
-	u32 sleep_duration;
+	uint32_t sleep_start;
+	uint32_t sleep_duration;
 	int timer_active;
 
 	// used by jamming
 	int packet_observed;
-	u32 anchor;
+	uint32_t anchor;
 } ego_fsm_state_t;
 
 typedef void (*ego_st_handler)(ego_fsm_state_t *);
 
 #define EGO_PACKET_LEN 36
 typedef struct _ego_packet_t {
-	u8 rxbuf[EGO_PACKET_LEN];
-	u32 rxtime;
+	uint8_t rxbuf[EGO_PACKET_LEN];
+	uint32_t rxtime;
 } ego_packet_t;
 
 static void ssp_start(void) {
@@ -134,7 +134,7 @@ static void do_rx(ego_packet_t *packet) {
 	for (i = 0; i < EGO_PACKET_LEN; i++) {
 		// make sure there are bytes ready
 		while (!(SSP1SR & SSPSR_RNE)) ;
-		packet->rxbuf[i] = (u8)DIO_SSP_DR;
+		packet->rxbuf[i] = (uint8_t)DIO_SSP_DR;
 	}
 }
 
@@ -143,19 +143,19 @@ static inline int sync_received(void) {
 }
 
 // sleep for some milliseconds
-static void sleep_ms(ego_fsm_state_t *state, u32 duration) {
+static void sleep_ms(ego_fsm_state_t *state, uint32_t duration) {
 	state->sleep_start = CLK100NS;
 	state->sleep_duration = duration * 1000*10;
 }
 
 // sleep for some milliseconds relative to the current anchor point
-static void sleep_ms_anchor(ego_fsm_state_t *state, u32 duration) {
+static void sleep_ms_anchor(ego_fsm_state_t *state, uint32_t duration) {
 	state->sleep_start = state->anchor;
 	state->sleep_duration = duration * 1000*10;
 }
 
 static inline int sleep_elapsed(ego_fsm_state_t *state) {
-	u32 now = CLK100NS;
+	uint32_t now = CLK100NS;
 	if (now < state->sleep_start)
 		now += 3276800000;
 	return (now - state->sleep_start) >= state->sleep_duration;
@@ -166,7 +166,7 @@ static inline int sleep_elapsed(ego_fsm_state_t *state) {
 // states
 
 // do nothing
-static void nop_state(ego_fsm_state_t *state) {
+static void nop_state(ego_fsm_state_t *state __attribute__((unused))) {
 }
 
 // used in follow and jam mode, override the channel supplied by user
@@ -182,9 +182,8 @@ static void start_rf_state(ego_fsm_state_t *state) {
 }
 
 static void cap_state(ego_fsm_state_t *state) {
-	ego_packet_t packet = {
-		.rxtime = CLK100NS,
-	};
+	ego_packet_t packet;
+	packet.rxtime = CLK100NS;
 
 	if (sleep_elapsed(state)) {
 		sleep_ms(state, 4);
@@ -228,10 +227,9 @@ static void continuous_init_state(ego_fsm_state_t *state) {
 	state->state = EGO_ST_START_RX;
 }
 
-static void continuous_cap_state(ego_fsm_state_t *state) {
-	ego_packet_t packet = {
-		.rxtime = CLK100NS,
-	};
+static void continuous_cap_state(ego_fsm_state_t *state __attribute__((unused))) {
+	ego_packet_t packet;
+	packet.rxtime = CLK100NS;
 
 	if (sync_received()) {
 		RXLED_SET;
@@ -330,11 +328,11 @@ static void jam_sleep_state(ego_fsm_state_t *state) {
 
 void ego_main(ego_mode_t mode) {
 	const ego_st_handler *handler; // set depending on mode
-	ego_fsm_state_t state = {
-		.state = EGO_ST_INIT,
-		.channel_index = 0,
-		.timer_active = 0,
-	};
+	ego_fsm_state_t state;
+
+	state.state = EGO_ST_INIT;
+	state.channel_index = 0;
+	state.timer_active = 0;
 
 	// hopping connection following
 	static const ego_st_handler follow_handler[] = {

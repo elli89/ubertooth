@@ -1,5 +1,5 @@
 /*
-	LPCUSB, an USB device driver for LPC microcontrollers	
+	LPCUSB, an USB device driver for LPC microcontrollers
 	Copyright (C) 2006 Bertrik Sikken (bertrik@sikken.nl)
 
 	Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -25,14 +25,16 @@
 	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 /**
 	Hardware definitions for the LPC USB controller
 
 	These are private to the usbhw module
 */
 
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /* USBIntSt bits */
 #define USB_INT_REQ_LP				(1<<0)
@@ -134,15 +136,12 @@
 
 
 /** USBHw functions only used internally */
-BOOL USBHwInit			(void);
-void USBHwSetAddress	(U8 bAddr);
-void USBHwConfigDevice	(BOOL fConfigured);
-void USBHwEPConfig		(U8 bEP, U16 wMaxPacketSize);
-U8   USBHwEPGetStatus	(U8 bEP);
+bool USBHwInit			(void);
+void USBHwSetAddress	(uint8_t bAddr);
+void USBHwConfigDevice	(bool fConfigured);
+void USBHwEPConfig		(uint8_t bEP, uint16_t wMaxPacketSize);
+uint8_t   USBHwEPGetStatus	(uint8_t bEP);
 
-
-
-
-
-
-
+#ifdef __cplusplus
+}
+#endif

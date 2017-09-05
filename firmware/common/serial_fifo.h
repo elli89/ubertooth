@@ -1,5 +1,5 @@
 /*
-	LPCUSB, an USB device driver for LPC microcontrollers	
+	LPCUSB, an USB device driver for LPC microcontrollers
 	Copyright (C) 2006 Bertrik Sikken (bertrik@sikken.nl)
 
 	Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -32,11 +32,11 @@
 typedef struct {
 	int		head;
 	int 	tail;
-	U8		*buf;
+	uint8_t		*buf;
 } fifo_t;
 
-void fifo_init(fifo_t *fifo, U8 *buf);
-BOOL fifo_put(fifo_t *fifo, U8 c);
-BOOL fifo_get(fifo_t *fifo, U8 *pc);
+void fifo_init(fifo_t *fifo, uint8_t *buf);
+BOOL fifo_put(fifo_t *fifo, uint8_t c);
+BOOL fifo_get(fifo_t *fifo, uint8_t *pc);
 int  fifo_avail(fifo_t *fifo);
 int	 fifo_free(fifo_t *fifo);

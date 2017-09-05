@@ -1,5 +1,5 @@
 /*
-	LPCUSB, an USB device driver for LPC microcontrollers	
+	LPCUSB, an USB device driver for LPC microcontrollers
 	Copyright (C) 2006 Bertrik Sikken (bertrik@sikken.nl)
 
 	Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -29,30 +29,18 @@
 /**
 	@file
 	primitive types used in the USB stack
- */
+*/
 
 
 #ifndef _TYPE_H_
 #define _TYPE_H_
 
-typedef unsigned char		BYTE;	/**< unsigned 8-bit */
-typedef unsigned char		U8;		/**< unsigned 8-bit */
-typedef unsigned short int	U16;	/**< unsigned 16-bit */
-typedef unsigned int		U32;	/**< unsigned 32-bit */
-
-typedef int					BOOL;	/**< #TRUE or #FALSE */
-
-#define	TRUE	1					/**< TRUE */
-#define FALSE	0					/**< FALSE */
-
-#ifndef NULL
-#define NULL	((void*)0)			/**< NULL pointer */
-#endif
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 /* some other useful macros */
 #define MIN(x,y)	((x)<(y)?(x):(y))	/**< MIN */
 #define MAX(x,y)	((x)>(y)?(x):(y))	/**< MAX */
 
-
 #endif /* _TYPE_H_ */
-

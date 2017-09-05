@@ -81,9 +81,6 @@ LPCUSB_TARGET = LPC17xx
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
-# Output Directory
-OUTDIR = .
-
 # Library paths
 LIBS_PATH = ../common
 LPCUSB_PATH = $(LIBS_PATH)/lpcusb/target
@@ -119,13 +116,6 @@ LINKER_SCRIPT ?= LPC17xx_Linker_Script_with_bootloader.ld
 #     For a directory that has spaces, enclose it in quotes.
 EXTRAINCDIRS = $(LIBS_PATH) $(LPCUSB_PATH) ../../host/libubertooth/src
 
-# Compiler flag to set the C Standard level.
-#     c89   = "ANSI" C
-#     gnu89 = c89 plus GCC extensions
-#     c99   = ISO C99 standard (not yet fully implemented)
-#     gnu99 = c99 plus GCC extensions
-CSTANDARD = -std=gnu99
-
 # Place -D or -U options here for C sources
 CDEFS  = -D$(LPCUSB_TARGET) $(UBERTOOTH_OPTS) $(COMPILE_OPTS) -Wa,-a,-ad
 
@@ -133,7 +123,7 @@ CDEFS  = -D$(LPCUSB_TARGET) $(UBERTOOTH_OPTS) $(COMPILE_OPTS) -Wa,-a,-ad
 ADEFS =
 
 # Place -D or -U options here for C++ sources
-CPPDEFS = -D$(BOARD) -D$(LPCUSB_TARGET) $(COMPILE_OPTS)
+CPPDEFS = -D$(LPCUSB_TARGET) $(UBERTOOTH_OPTS) $(COMPILE_OPTS)
 
 #---------------- Compiler Options C ----------------
 #  -g:          generate debugging information
@@ -142,16 +132,20 @@ CPPDEFS = -D$(BOARD) -D$(LPCUSB_TARGET) $(COMPILE_OPTS)
 #  -Wall...:     warning level
 #  -Wa,...:      tell GCC to pass this to the assembler.
 #    -alhms...: create assembler listing
-CFLAGS = -g
+CFLAGS = -g$(DEBUG)
 CFLAGS += $(CDEFS)
+# CFLAGS += -flto
 CFLAGS += -O$(OPT)
 CFLAGS += -Wall
-CFLAGS += -Wno-unused
-CFLAGS += -Wno-comments
-CFLAGS += -fmessage-length=0
-CFLAGS += -fno-builtin
-CFLAGS += -ffunction-sections
+CFLAGS += -Wundef
+CFLAGS += -Wunused
 CFLAGS += -Wextra
+CFLAGS += -Wcomments
+CFLAGS += -Wunreachable-code
+CFLAGS += -Wsign-compare
+
+# CFLAGS += -fmessage-length=0
+CFLAGS += -ffunction-sections
 CFLAGS += -D__thumb2__=1
 CFLAGS += -msoft-float
 CFLAGS += -mno-sched-prolog
@@ -159,16 +153,10 @@ CFLAGS += -fno-hosted
 CFLAGS += -mtune=cortex-m3
 CFLAGS += -march=armv7-m
 CFLAGS += -mfix-cortex-m3-ldrd
-#CFLAGS += -Wundef
-#CFLAGS += -funsigned-char
-#CFLAGS += -funsigned-bitfields
-#CFLAGS += -fno-inline-small-functions
+# CFLAGS += -funsigned-char
+# CFLAGS += -funsigned-bitfields
 #CFLAGS += -fpack-struct
-#CFLAGS += -fshort-enums
-#CFLAGS += -Wstrict-prototypes
 #CFLAGS += -fno-unit-at-a-time
-#CFLAGS += -Wunreachable-code
-#CFLAGS += -Wsign-compare
 CFLAGS += -Wa,-alhms=$(<:%.c=$(OBJDIR)/%.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
@@ -193,7 +181,7 @@ CPPFLAGS += -O$(OPT)
 #CPPFLAGS += -fshort-enums
 #CPPFLAGS += -fno-exceptions
 CPPFLAGS += -Wall
-#CFLAGS += -Wundef
+#CPPFLAGS += -Wundef
 #CPPFLAGS += -mshort-calls
 #CPPFLAGS += -fno-unit-at-a-time
 #CPPFLAGS += -Wstrict-prototypes
@@ -201,12 +189,16 @@ CPPFLAGS += -Wall
 #CPPFLAGS += -Wsign-compare
 CPPFLAGS += -Wa,-alhms=$(<:%.cpp=$(OBJDIR)/%.lst)
 CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
-#CPPFLAGS += $(CSTANDARD)
+#CPPFLAGS += $(CPPSTANDARD)
 CPPFLAGS += -fno-exceptions
 CPPFLAGS += -fno-rtti
 CPPFLAGS += -fno-threadsafe-statics
 CPPFLAGS += -Wextra
 CPPFLAGS += -Weffc++
+CPPFLAGS += $(GIT_REVISION)
+CPPFLAGS += $(COMPILE_BY)
+CPPFLAGS += $(COMPILE_HOST)
+CPPFLAGS += $(TIMESTAMP)
 
 #---------------- Assembler Options ----------------
 #  -Wa,...:   tell GCC to pass this to the assembler.
@@ -240,7 +232,7 @@ LDFLAGS += -lgcc -lm
 LDFLAGS += -Wl,--end-group
 
 #---------------- Programming Options ----------------
-LPCISP  ?= ~/src/lpc21isp/lpc21isp
+LPCISP  ?=$(strip $(shell which lpc21isp))
 PROGDEV ?= /dev/ttyUSB0
 
 #============================================================================
@@ -290,7 +282,7 @@ GENDEPFLAGS = -MMD -MP -MD
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS) -I. $(CFLAGS) $(GENDEPFLAGS)
+ALL_CFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS) -I. -x c $(CFLAGS) $(GENDEPFLAGS)
 ALL_CPPFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mcpu=$(CPU) -$(CPU_MODE) $(CPU_FLAGS_ASM) $(ASFLAGS)
 # only difference between Linker flags and CFLAGS is CPU_FLAGS_ASM as -mapcs-frame is not needed

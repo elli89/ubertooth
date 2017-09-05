@@ -53,12 +53,12 @@
 #include "ubertooth.h"
 #include "ubertooth_interface.h"
 
-typedef int (VendorRequestHandler)(u8 request, u16 *request_params, u8 *data, int *data_len);
+typedef int (VendorRequestHandler)(uint8_t request, uint16_t *request_params, uint8_t *data, int *data_len);
 
 int ubertooth_usb_init(VendorRequestHandler *vendor_req_handler);
 void queue_init();
 usb_pkt_rx *usb_enqueue();
 usb_pkt_rx *dequeue();
-void handle_usb(u32 clkn);
+void handle_usb(uint32_t clkn);
 
 #endif /* __UBERTOOTH_USB_H */

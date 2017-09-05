@@ -23,11 +23,15 @@
 #define __UBERTOOTH_H
 
 #include "lpc17.h"
-#include "types.h"
 #include "cc2400.h"
 #include "ubertooth_interface.h"
 
-typedef void (*IAP_ENTRY)(u32[], u32[]);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+typedef void (*IAP_ENTRY)(uint32_t[], uint32_t[]);
 extern const IAP_ENTRY iap_entry;
 
 /* operating modes */
@@ -311,25 +315,25 @@ enum operating_modes {
 extern uint32_t bootloader_ctrl;
 #define DFU_MODE 0x4305BB21
 
-void wait(u8 seconds);
-void wait_ms(u32 ms);
-void wait_us(u32 us);
-u32 rbit(u32 value);
+void wait(uint8_t seconds);
+void wait_ms(uint32_t ms);
+void wait_us(uint32_t us);
+uint32_t rbit(uint32_t value);
 void gpio_init(void);
 void all_pins_off(void);
 void ubertooth_init(void);
 void dio_ssp_init(void);
 void atest_init(void);
 void cc2400_init(void);
-u32 cc2400_spi(u8 len, u32 data);
-u16 cc2400_get(u8 reg);
-void cc2400_set(u8 reg, u16 val);
-u8 cc2400_get8(u8 reg);
-void cc2400_set8(u8 reg, u8 val);
-void cc2400_fifo_write(u8 len, u8 *data);
-void cc2400_fifo_read(u8 len, u8 *buf);
-u8 cc2400_status(void);
-u8 cc2400_strobe(u8 reg);
+uint32_t cc2400_spi(uint8_t len, uint32_t data);
+uint16_t cc2400_get(uint8_t reg);
+void cc2400_set(uint8_t reg, uint16_t val);
+uint8_t cc2400_get8(uint8_t reg);
+void cc2400_set8(uint8_t reg, uint8_t val);
+void cc2400_fifo_write(uint8_t len, uint8_t *data);
+void cc2400_fifo_read(uint8_t len, uint8_t *buf);
+uint8_t cc2400_status(void);
+uint8_t cc2400_strobe(uint8_t reg);
 void cc2400_reset(void);
 void clock_start(void);
 void reset(void);
@@ -341,5 +345,9 @@ void cc2400_hop_tx(uint16_t channel);
 void get_part_num(uint8_t *buffer, int *len);
 void get_device_serial(uint8_t *buffer, int *len);
 void set_isp(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UBERTOOTH_H */

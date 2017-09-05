@@ -20,7 +20,7 @@
  */
 
 /*
-	LPCUSB, an USB device driver for LPC microcontrollers	
+	LPCUSB, an USB device driver for LPC microcontrollers
 	Copyright (C) 2006 Bertrik Sikken (bertrik@sikken.nl)
 
 	Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -64,18 +64,18 @@
 
 // data structure for GET_LINE_CODING / SET_LINE_CODING class requests
 typedef struct {
-	U32 dwDTERate;
-	U8  bCharFormat;
-	U8  bParityType;
-	U8  bDataBits;
+	uint32_t dwDTERate;
+	uint8_t  bCharFormat;
+	uint8_t  bParityType;
+	uint8_t  bDataBits;
 } TLineCoding;
 
-static BOOL HandleClassRequest(TSetupPacket *pSetup, int *piLen, U8 **ppbData);
-static void BulkOut(U8 bEP, U8 bEPStatus);
-static void SendNextBulkIn(U8 bEP, BOOL fFirstPacket);
-static void BulkIn(U8 bEP, U8 bEPStatus);
-static void USBFrameHandler(U16 wFrame);
-static void USBDevIntHandler(U8 bDevStatus);
+static BOOL HandleClassRequest(TSetupPacket *pSetup, int *piLen, uint8_t **ppbData);
+static void BulkOut(uint8_t bEP, uint8_t bEPStatus);
+static void SendNextBulkIn(uint8_t bEP, BOOL fFirstPacket);
+static void BulkIn(uint8_t bEP, uint8_t bEPStatus);
+static void USBFrameHandler(uint16_t wFrame);
+static void USBDevIntHandler(uint8_t bDevStatus);
 void VCOM_init(void);
 int VCOM_putchar(int c);
 int VCOM_getchar(void);

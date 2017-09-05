@@ -1,5 +1,5 @@
 /*
-	LPCUSB, an USB device driver for LPC microcontrollers	
+	LPCUSB, an USB device driver for LPC microcontrollers
 	Copyright (C) 2006 Bertrik Sikken (bertrik@sikken.nl)
 
 	Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -32,6 +32,11 @@
 
 #include "type.h"
 #include "usbstruct.h"		// for TSetupPacket
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /*************************************************************************
 	USB configuration
@@ -65,25 +70,25 @@
 #define INACK_BO		(1<<6)			/**< interrupt on NACK for bulk out */
 
 void USBHwISR			(void);
-void USBHwNakIntEnable	(U8 bIntBits);
-void USBHwConnect		(BOOL fConnect);
+void USBHwNakIntEnable	(uint8_t bIntBits);
+void USBHwConnect		(bool fConnect);
 
 // endpoint operations
-int  USBHwEPRead		(U8 bEP, U8 *pbBuf, U32 iMaxLen);
-int	 USBHwEPWrite		(U8 bEP, U8 *pbBuf, U32 iLen);
-void USBHwEPStall		(U8 bEP, BOOL fStall);
-int  USBHwISOCEPRead    (const U8 bEP, U8 *pbBuf, const U32 iMaxLen);
+int  USBHwEPRead		(uint8_t bEP, uint8_t *pbBuf, uint32_t iMaxLen);
+int	 USBHwEPWrite		(uint8_t bEP, uint8_t *pbBuf, uint32_t iLen);
+void USBHwEPStall		(uint8_t bEP, bool fStall);
+int  USBHwISOCEPRead    (const uint8_t bEP, uint8_t *pbBuf, const uint32_t iMaxLen);
 
 /** Endpoint interrupt handler callback */
-typedef void (TFnEPIntHandler)	(U8 bEP, U8 bEPStatus);
-void USBHwRegisterEPIntHandler	(U8 bEP, TFnEPIntHandler *pfnHandler);
+typedef void (TFnEPIntHandler)	(uint8_t bEP, uint8_t bEPStatus);
+void USBHwRegisterEPIntHandler	(uint8_t bEP, TFnEPIntHandler *pfnHandler);
 
 /** Device status handler callback */
-typedef void (TFnDevIntHandler)	(U8 bDevStatus);
+typedef void (TFnDevIntHandler)	(uint8_t bDevStatus);
 void USBHwRegisterDevIntHandler	(TFnDevIntHandler *pfnHandler);
 
 /** Frame event handler callback */
-typedef void (TFnFrameHandler)(U16 wFrame);
+typedef void (TFnFrameHandler)(uint16_t wFrame);
 void USBHwRegisterFrameHandler(TFnFrameHandler *pfnHandler);
 
 
@@ -92,51 +97,50 @@ void USBHwRegisterFrameHandler(TFnFrameHandler *pfnHandler);
 **************************************************************************/
 
 // initialise the complete stack, including HW
-BOOL USBInit(void);
+bool USBInit(void);
 
 /** Request handler callback (standard, vendor, class) */
-typedef BOOL (TFnHandleRequest)(TSetupPacket *pSetup, int *piLen, U8 **ppbData);
-void USBRegisterRequestHandler(int iType, TFnHandleRequest *pfnHandler, U8 *pbDataStore);
+typedef bool (TFnHandleRequest)(TSetupPacket *pSetup, int *piLen, uint8_t **ppbData);
+void USBRegisterRequestHandler(int iType, TFnHandleRequest *pfnHandler, uint8_t *pbDataStore);
 void USBRegisterCustomReqHandler(TFnHandleRequest *pfnHandler);
 
-/** Enable generation of OS Descriptors to allow for driverless WinUSB device install on Windows 
+/** Enable generation of OS Descriptors to allow for driverless WinUSB device install on Windows
 	Guid string format: "{00000000-0000-0000-0000-000000000000}" (Generate a new GUID) */
-void USBRegisterWinusbInterface(U8 bVendorRequestIndex, const char* pcInterfaceGuid);
+void USBRegisterWinusbInterface(uint8_t bVendorRequestIndex, const char* pcInterfaceGuid);
 
 /** Descriptor handler callback */
-typedef BOOL (TFnGetDescriptor)(U16 wTypeIndex, U16 wLangID, int *piLen, U8 **ppbData);
+typedef bool (TFnGetDescriptor)(uint16_t wTypeIndex, uint16_t wLangID, int *piLen, uint8_t **ppbData);
 
 /** Default standard request handler */
-BOOL USBHandleStandardRequest(TSetupPacket *pSetup, int *piLen, U8 **ppbData);
+bool USBHandleStandardRequest(TSetupPacket *pSetup, int *piLen, uint8_t **ppbData);
 
 /** Default EP0 handler */
-void USBHandleControlTransfer(U8 bEP, U8 bEPStat);
+void USBHandleControlTransfer(uint8_t bEP, uint8_t bEPStat);
 
 /** Descriptor handling */
-void USBRegisterDescriptors(U8 *pabDescriptors);
-BOOL USBGetDescriptor(U16 wTypeIndex, U16 wLangID, int *piLen, U8 **ppbData);
+void USBRegisterDescriptors(uint8_t *pabDescriptors);
+bool USBGetDescriptor(uint16_t wTypeIndex, uint16_t wLangID, int *piLen, uint8_t **ppbData);
 
 
 
 
 /** DMA descriptor setup */
 void USBSetupDMADescriptor(
-		volatile U32 dmaDescriptor[], 
-		volatile U32 nextDdPtr[],
-		const U8 isIsocFlag, 
-		const U16 maxPacketSize, 
-		const U16 dmaLengthIsocNumFrames,
+		volatile uint32_t dmaDescriptor[],
+		volatile uint32_t nextDdPtr[],
+		const uint8_t isIsocFlag,
+		const uint16_t maxPacketSize,
+		const uint16_t dmaLengthIsocNumFrames,
 		void *dmaBufferStartAddress,
-		U32 *isocPacketSizeMemoryAddress );
+		uint32_t *isocPacketSizeMemoryAddress );
 
-void USBInitializeISOCFrameArray(U32 isocFrameArr[], const U32 numElements, const U16 startFrameNumber, const U16 defaultFrameLength);
-void USBInitializeUSBDMA(volatile U32* udcaHeadArray[32]);
-void USBSetHeadDDForDMA(const U8 bEp, volatile U32* udcaHeadArray[32], volatile U32 *dmaDescriptorPtr);
+void USBInitializeISOCFrameArray(uint32_t isocFrameArr[], const uint32_t numElements, const uint16_t startFrameNumber, const uint16_t defaultFrameLength);
+void USBInitializeUSBDMA(volatile uint32_t* udcaHeadArray[32]);
+void USBSetHeadDDForDMA(const uint8_t bEp, volatile uint32_t* udcaHeadArray[32], volatile uint32_t *dmaDescriptorPtr);
 
-void USBEnableDMAForEndpoint(const U8 bEndpointNumber) ;
-void USBDisableDMAForEndpoint(const U8 bEndpointNumber);
+void USBEnableDMAForEndpoint(const uint8_t bEndpointNumber) ;
+void USBDisableDMAForEndpoint(const uint8_t bEndpointNumber);
 
-
-
-
-
+#ifdef __cplusplus
+}
+#endif

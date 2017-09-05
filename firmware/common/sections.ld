@@ -94,7 +94,7 @@ SECTIONS
 	} > rom
 
 
-	.ARM.extab : 
+	.ARM.extab :
 	{
 		*(.ARM.extab* .gnu.linkonce.armextab.*)
 	} > rom

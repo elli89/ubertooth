@@ -173,8 +173,8 @@ static uint8_t dfu_buffer[DFU::transfer_size];
 static uint32_t count = 0;
 static bool use_timeout = false;
 
-BOOL dfu_request_handler(TSetupPacket *pSetup, int *piLen, u8 **ppbData) {
-    return dfu.request_handler(pSetup, reinterpret_cast<uint32_t*>(piLen), ppbData) ? TRUE : FALSE;
+bool dfu_request_handler(TSetupPacket *pSetup, int *piLen, uint8_t **ppbData) {
+	return dfu.request_handler(pSetup, reinterpret_cast<uint32_t*>(piLen), ppbData) ? true : false;
 }
 
 int bootloader_usb_init()
@@ -192,13 +192,13 @@ int bootloader_usb_init()
 	//ISER0 |= ISER0_ISE_USB;
 
 	// connect to bus
-	USBHwConnect(TRUE);
+	USBHwConnect(true);
 
 	return 0;
 }
 
 void bootloader_usb_close() {
-    USBHwConnect(FALSE);
+	USBHwConnect(false);
 }
 
 void leds_on() {

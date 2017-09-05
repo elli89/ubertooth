@@ -14,8 +14,6 @@ SRC = $(TARGET).c \
 	ubertooth_dma.c \
 	cc2400_rangetest.c \
 	ego.c \
-	$(LIBS_PATH)/usb_serial.c \
-	$(LIBS_PATH)/serial_fifo.c \
 	$(LIBS_PATH)/LPC17xx_Startup.c \
 	$(LIBS_PATH)/LPC17xx_Interrupts.c \
 	$(LIBS_PATH)/ubertooth.c \

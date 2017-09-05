@@ -24,23 +24,26 @@
 #define __BLUETOOTH_H
 
 #include "ubertooth.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #define MAX_SYNCWORD_ERRS 5
 
-bdaddr target;
-u64 syncword;
-u8 afh_enabled;
-u8 afh_map[10];
-u8 used_channels;
+extern bdaddr   target;
+extern uint64_t syncword;
+extern bool     afh_enabled;
+extern bool     afh_map[10];
+extern uint8_t  used_channels;
 
 /* Barker distance/correct gains us very little when sniffing a known AC
-static const u8 ao_barker_distance[] = {
+static const uint8_t ao_barker_distance[] = {
 	3,2,3,3,2,1,3,2,2,1,3,2,1,0,2,1,3,3,2,3,3,2,3,3,3,2,3,3,2,1,3,2, //0x00-0x1f
 	3,3,2,3,3,2,3,3,3,2,3,3,2,1,3,2,2,3,1,2,3,3,2,3,3,3,2,3,3,2,3,3, //0x20-0x3f
 	3,3,2,3,3,2,3,3,3,2,3,3,2,1,3,2,2,3,1,2,3,3,2,3,3,3,2,3,3,2,3,3, //0x40-0x5f
 	2,3,1,2,3,3,2,3,3,3,2,3,3,2,3,3,1,2,0,1,2,3,1,2,2,3,1,2,3,3,2,3};//0x60-0x7f
 
-static const u8 ao_barker_correct[] = {
+static const uint8_t ao_barker_correct[] = {
 	0x0d, 0x0d, 0x72, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d,
 	0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x72, 0x0d, 0x72, 0x72, 0x0d, 0x0d,
 	0x72, 0x0d, 0x0d, 0x0d, 0x72, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x72,
@@ -56,7 +59,8 @@ static const u8 ao_barker_correct[] = {
 */
 
 void precalc();
-u16 next_hop(u32 clkn);
-int find_access_code(u8 *idle_rxbuf);
+uint16_t next_hop(uint32_t clkn);
+int find_access_code(uint8_t* idle_rxbuf);
+void whiten(bool* input, bool* output, uint32_t clkn, size_t length, size_t skip);
 
 #endif /* __BLUETOOTH_H */

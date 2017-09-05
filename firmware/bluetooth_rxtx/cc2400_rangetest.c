@@ -21,6 +21,8 @@
 
 #include "cc2400_rangetest.h"
 
+rangetest_result rr;
+
 /*
  * This range test transmits a Bluetooth-like (but not Bluetooth compatible)
  * packet to a repeater and then receives the repeated packet.  It is only
@@ -46,17 +48,17 @@
  *   crc: 2 bytes
  */
 
-void cc2400_rangetest(volatile u16 *chan_ptr)
+void cc2400_rangetest(volatile uint16_t *chan_ptr)
 {
 #ifdef TX_ENABLE
-	u32 command[5];
-	u32 result[5];
+	uint32_t command[5];
+	uint32_t result[5];
 	int i;
 	int j;
-	u8 len = 22;
-	u8 pa = 0;
-	u8 txbuf[len];
-	u8 rxbuf[len];
+	uint8_t len = 22;
+	uint8_t pa = 0;
+	uint8_t txbuf[len];
+	uint8_t rxbuf[len];
 
 	txbuf[0] = len - 1; // length of data (rest of payload)
 	txbuf[1] = 0; // request
@@ -165,14 +167,14 @@ void cc2400_rangetest(volatile u16 *chan_ptr)
 }
 
 /* This is the repeater implementation to be used with cc2400_rangetest(). */
-void cc2400_repeater(volatile u16 *chan_ptr)
+void cc2400_repeater(volatile uint16_t *chan_ptr)
 {
 #ifdef TX_ENABLE
 	int i;
 	int j;
-	u8 len = 22;
-	u8 pa = 0;
-	u8 buf[len];
+	uint8_t len = 22;
+	uint8_t pa = 0;
+	uint8_t buf[len];
 
 	//FIXME allow to be turned off
 	while (1) {
@@ -234,10 +236,10 @@ void cc2400_repeater(volatile u16 *chan_ptr)
 #endif
 }
 
-void cc2400_txtest(volatile u8 *mod_ptr, volatile u16 *chan_ptr)
+void cc2400_txtest(volatile uint8_t *mod_ptr, volatile uint16_t *chan_ptr)
 {
 #ifdef TX_ENABLE
-	u16 mdmctrl;
+	uint16_t mdmctrl;
 	if (*mod_ptr == MOD_BT_BASIC_RATE) {
 		mdmctrl = 0x0029; // 160 kHz frequency deviation
 	} else if (*mod_ptr == MOD_BT_LOW_ENERGY) {

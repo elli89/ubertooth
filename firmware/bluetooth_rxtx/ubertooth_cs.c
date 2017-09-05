@@ -32,6 +32,10 @@ typedef enum {
 
 #define CS_THRESHOLD_DEFAULT (int8_t)(-120)
 
+uint8_t cs_no_squelch;       // rx all packets if set
+int8_t cs_threshold_req;     // requested CS threshold in dBm
+int8_t cs_threshold_cur;     // current CS threshold in dBm
+volatile bool cs_trigger;    // set by intr on P2.2 falling (CS)
 
 /* Set CC2400 carrier sense threshold and store value to
  * global. CC2400 RSSI is determined by 54dBm + level. CS threshold is

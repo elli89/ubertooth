@@ -20,7 +20,7 @@
  */
 
 /*
-	LPCUSB, an USB device driver for LPC microcontrollers	
+	LPCUSB, an USB device driver for LPC microcontrollers
 	Copyright (C) 2006 Bertrik Sikken (bertrik@sikken.nl)
 
 	Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 	THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 	IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 	OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, 
+	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -62,7 +62,7 @@
  */
 
 #define CLK100NS T0TC
-volatile u8 clkn_high;
+volatile uint8_t clkn_high;
 #define CLKN ((clkn_high << 20) | (CLK100NS / 3125))
 
 #define BULK_IN_EP		0x82
@@ -74,45 +74,45 @@ volatile u8 clkn_high;
 
 /* DMA buffers */
 #define DMA_SIZE 50
-u8 rxbuf1[DMA_SIZE];
-u8 rxbuf2[DMA_SIZE];
+uint8_t rxbuf1[DMA_SIZE];
+uint8_t rxbuf2[DMA_SIZE];
 
 /*
  * The active buffer is the one with an active DMA transfer.
  * The idle buffer is the one we can read/write between transfers.
  */
-u8 *active_rxbuf = &rxbuf1[0];
-u8 *idle_rxbuf = &rxbuf2[0];
+uint8_t *active_rxbuf = &rxbuf1[0];
+uint8_t *idle_rxbuf = &rxbuf2[0];
 
 rangetest_result rr;
 
-volatile u32 mode = MODE_IDLE;
-volatile u32 requested_mode = MODE_IDLE;
-volatile u32 modulation = MOD_BT_BASIC_RATE;
-volatile u16 channel = 2441;
-volatile u16 low_freq = 2400;
-volatile u16 high_freq = 2483;
+volatile uint32_t mode = MODE_IDLE;
+volatile uint32_t requested_mode = MODE_IDLE;
+volatile uint32_t modulation = MOD_BT_BASIC_RATE;
+volatile uint16_t channel = 2441;
+volatile uint16_t low_freq = 2400;
+volatile uint16_t high_freq = 2483;
 
 /* DMA linked list items */
 typedef struct {
-	u32 src;
-	u32 dest;
-	u32 next_lli;
-	u32 control;
+	uint32_t src;
+	uint32_t dest;
+	uint32_t next_lli;
+	uint32_t control;
 } dma_lli;
 
 dma_lli rx_dma_lli1;
 dma_lli rx_dma_lli2;
 
 /* rx terminal count and error interrupt counters */
-volatile u32 rx_tc;
-volatile u32 rx_err;
+volatile uint32_t rx_tc;
+volatile uint32_t rx_err;
 
 /* number of rx USB packets to send */
-volatile u32 rx_pkts = 0;
+volatile uint32_t rx_pkts = 0;
 
 /* status information byte */
-volatile u8 status = 0;
+volatile uint8_t status = 0;
 
 #define DMA_OVERFLOW  0x01
 #define DMA_ERROR     0x02
@@ -125,8 +125,8 @@ volatile u8 status = 0;
 
 usb_pkt_rx fifo[128];
 
-volatile u32 head = 0;
-volatile u32 tail = 0;
+volatile uint32_t head = 0;
+volatile uint32_t tail = 0;
 
 void queue_init()
 {
@@ -134,12 +134,12 @@ void queue_init()
 	tail = 0;
 }
 
-int enqueue(u8 *buf)
+int enqueue(uint8_t *buf)
 {
 	int i;
-	u8 h = head & 0x7F;
-	u8 t = tail & 0x7F;
-	u8 n = (t + 1) & 0x7F;
+	uint8_t h = head & 0x7F;
+	uint8_t t = tail & 0x7F;
+	uint8_t n = (t + 1) & 0x7F;
 
 	/* fail if queue is full */
 	if (h == n)
@@ -160,8 +160,8 @@ int enqueue(u8 *buf)
 
 int dequeue()
 {
-	u8 h = head & 0x7F;
-	u8 t = tail & 0x7F;
+	uint8_t h = head & 0x7F;
+	uint8_t t = tail & 0x7F;
 
 	/* fail if queue is empty */
 	if (h == t) {
@@ -169,18 +169,18 @@ int dequeue()
 		return 0;
 	}
 
-	USBHwEPWrite(BULK_IN_EP, (u8 *)&fifo[h], sizeof(usb_pkt_rx));
+	USBHwEPWrite(BULK_IN_EP, (uint8_t *)&fifo[h], sizeof(usb_pkt_rx));
 	++head;
 
 	return 1;
 }
 
-static const u8 abDescriptors[] = {
+static const uint8_t abDescriptors[] = {
 
 /* Device descriptor */
-	0x12,              		
-	DESC_DEVICE,       		
-	LE_WORD(0x0200),		// bcdUSB	
+	0x12,
+	DESC_DEVICE,
+	LE_WORD(0x0200),		// bcdUSB
 	0xFF,              		// bDeviceClass
 	0x00,              		// bDeviceSubClass
 	0x00,              		// bDeviceProtocol
@@ -204,8 +204,8 @@ static const u8 abDescriptors[] = {
 	0x32,  					// bMaxPower
 
 // interface
-	0x09,   				
-	DESC_INTERFACE, 
+	0x09,
+	DESC_INTERFACE,
 	0x00,  		 			// bInterfaceNumber
 	0x00,   				// bAlternateSetting
 	0x02,   				// bNumEndPoints
@@ -215,20 +215,20 @@ static const u8 abDescriptors[] = {
 	0x00,   				// iInterface
 
 // bulk in
-	0x07,   		
-	DESC_ENDPOINT,   		
+	0x07,
+	DESC_ENDPOINT,
 	BULK_IN_EP,				// bEndpointAddress
 	0x02,   				// bmAttributes = BULK
 	LE_WORD(MAX_PACKET_SIZE),// wMaxPacketSize
-	0,						// bInterval   		
+	0,						// bInterval
 
 // bulk out
-	0x07,   		
-	DESC_ENDPOINT,   		
+	0x07,
+	DESC_ENDPOINT,
 	BULK_OUT_EP,			// bEndpointAddress
 	0x02,   				// bmAttributes = BULK
 	LE_WORD(MAX_PACKET_SIZE),// wMaxPacketSize
-	0,						// bInterval 
+	0,						// bInterval
 
 // string descriptors
 	0x04,
@@ -260,24 +260,24 @@ static const u8 abDescriptors[] = {
 	0
 };
 
-static u8 abVendorReqData[17];
+static uint8_t abVendorReqData[17];
 
-static void usb_bulk_in_handler(u8 bEP, u8 bEPStatus)
+static void usb_bulk_in_handler(uint8_t bEP, uint8_t bEPStatus)
 {
 	if (!(bEPStatus & EP_STATUS_DATA))
 		dequeue();
 }
 
-static void usb_bulk_out_handler(u8 bEP, u8 bEPStatus)
+static void usb_bulk_out_handler(uint8_t bEP, uint8_t bEPStatus)
 {
 }
 
-static BOOL usb_vendor_request_handler(TSetupPacket *pSetup, int *piLen, u8 **ppbData)
+static BOOL usb_vendor_request_handler(TSetupPacket *pSetup, int *piLen, uint8_t **ppbData)
 {
-	u8 *pbData = *ppbData;
-	u32 command[5];
-	u32 result[5];
-	u8 length; // string length
+	uint8_t *pbData = *ppbData;
+	uint32_t command[5];
+	uint32_t result[5];
+	uint8_t length; // string length
 
 	switch (pSetup->bRequest) {
 
@@ -477,7 +477,7 @@ static BOOL usb_vendor_request_handler(TSetupPacket *pSetup, int *piLen, u8 **pp
 		break;
 
 	case UBERTOOTH_SPECAN:
-		if (pSetup->wValue < 2049 || pSetup->wValue > 3072 || 
+		if (pSetup->wValue < 2049 || pSetup->wValue > 3072 ||
 				pSetup->wIndex < 2049 || pSetup->wIndex > 3072 ||
 				pSetup->wIndex < pSetup->wValue)
 			return FALSE;
@@ -491,7 +491,7 @@ static BOOL usb_vendor_request_handler(TSetupPacket *pSetup, int *piLen, u8 **pp
 		pbData[0] = 0x00;
 		pbData[1] = 0x00;
 
-		length = (u8)strlen(GIT_REVISION);
+		length = (uint8_t)strlen(GIT_REVISION);
 		pbData[2] = length;
 
 		memcpy(&pbData[3], GIT_REVISION, length);
@@ -509,7 +509,7 @@ int ubertooth_usb_init()
 {
 	// initialise stack
 	USBInit();
-	
+
 	// register device descriptors
 	USBRegisterDescriptors(abDescriptors);
 
@@ -522,7 +522,7 @@ int ubertooth_usb_init()
 
 	// enable USB interrupts
 	//ISER0 |= ISER0_ISE_USB;
-	
+
 	// connect to bus
 	USBHwConnect(TRUE);
 
@@ -582,9 +582,9 @@ static void dma_init()
 	DMACIntErrClr = 0xFF;
 
 	/* DMA linked lists */
-	rx_dma_lli1.src = (u32)&(DIO_SSP_DR);
-	rx_dma_lli1.dest = (u32)&rxbuf1[0];
-	rx_dma_lli1.next_lli = (u32)&rx_dma_lli2;
+	rx_dma_lli1.src = (uint32_t)&(DIO_SSP_DR);
+	rx_dma_lli1.dest = (uint32_t)&rxbuf1[0];
+	rx_dma_lli1.next_lli = (uint32_t)&rx_dma_lli2;
 	rx_dma_lli1.control = (DMA_SIZE) |
 			(1 << 12) |        /* source burst size = 4 */
 			(1 << 15) |        /* destination burst size = 4 */
@@ -593,9 +593,9 @@ static void dma_init()
 			DMACCxControl_DI | /* destination increment */
 			DMACCxControl_I;   /* terminal count interrupt enable */
 
-	rx_dma_lli2.src = (u32)&(DIO_SSP_DR);
-	rx_dma_lli2.dest = (u32)&rxbuf2[0];
-	rx_dma_lli2.next_lli = (u32)&rx_dma_lli1;
+	rx_dma_lli2.src = (uint32_t)&(DIO_SSP_DR);
+	rx_dma_lli2.dest = (uint32_t)&rxbuf2[0];
+	rx_dma_lli2.next_lli = (uint32_t)&rx_dma_lli1;
 	rx_dma_lli2.control = (DMA_SIZE) |
 			(1 << 12) |        /* source burst size = 4 */
 			(1 << 15) |        /* destination burst size = 4 */
@@ -650,7 +650,7 @@ static void dio_ssp_start()
 	/* enable rx DMA on DIO_SSP */
 	DIO_SSP_DMACR |= SSPDMACR_RXDMAE;
 	DIO_SSP_CR1 |= SSPCR1_SSE;
-	
+
 	/* enable DMA */
 	DMACC0Config |= DMACCxConfig_E;
 	ISER0 |= ISER0_ISE_DMA;
@@ -749,14 +749,14 @@ void cc2400_txtest()
 void cc2400_rangetest()
 {
 #ifdef TX_ENABLE
-	u32 command[5];
-	u32 result[5];
+	uint32_t command[5];
+	uint32_t result[5];
 	int i;
 	int j;
-	u8 len = 22;
-	u8 pa = 0;
-	u8 txbuf[len];
-	u8 rxbuf[len];
+	uint8_t len = 22;
+	uint8_t pa = 0;
+	uint8_t txbuf[len];
+	uint8_t rxbuf[len];
 
 	mode = MODE_RANGE_TEST;
 
@@ -875,9 +875,9 @@ void cc2400_repeater()
 #ifdef TX_ENABLE
 	int i;
 	int j;
-	u8 len = 22;
-	u8 pa = 0;
-	u8 buf[len];
+	uint8_t len = 22;
+	uint8_t pa = 0;
+	uint8_t buf[len];
 
 	mode = MODE_REPEATER;
 
@@ -944,8 +944,8 @@ void cc2400_repeater()
 
 void bt_stream_rx()
 {
-	u8 *tmp = NULL;
-	u8 epstat;
+	uint8_t *tmp = NULL;
+	uint8_t epstat;
 	int i;
 
 	RXLED_SET;
@@ -994,10 +994,10 @@ void bt_stream_rx()
 /* spectrum analysis */
 void specan()
 {
-	u8 epstat;
-	u16 f;
-	u8 i = 0;
-	u8 buf[DMA_SIZE];
+	uint8_t epstat;
+	uint16_t f;
+	uint8_t i = 0;
+	uint8_t buf[DMA_SIZE];
 
 	RXLED_SET;
 
@@ -1023,7 +1023,7 @@ void specan()
 			while (!(cc2400_status() & FS_LOCK));
 			cc2400_strobe(SRX);
 
-			//u32 j = 100; while (--j); //FIXME crude delay
+			//uint32_t j = 100; while (--j); //FIXME crude delay
 			buf[3 * i] = (f >> 8) & 0xFF;
 			buf[(3 * i) + 1] = f  & 0xFF;
 			buf[(3 * i) + 2] = cc2400_get(RSSI) >> 8;
@@ -1050,7 +1050,7 @@ void specan()
 }
 
 /* an ugly but effective way to identify a GIAC (inquiry packet) */
-int find_giac(u8 *buf)
+int find_giac(uint8_t *buf)
 {
 	int i, j;
 	const uint8_t giac[8][7] = {
@@ -1079,7 +1079,7 @@ int find_giac(u8 *buf)
 
 void bt_test_rx()
 {
-	u8 *tmp = NULL;
+	uint8_t *tmp = NULL;
 	int i;
 	int countdown = 0;
 	int num_giacs = 0;
@@ -1127,9 +1127,9 @@ void bt_test_rx()
 }
 
 /* delay a number of milliseconds while on internal oscillator (4 MHz) */
-void waitms(u8 ms)
+void waitms(uint8_t ms)
 {
-	u32 i = 400 * ms;
+	uint32_t i = 400 * ms;
 	while (--i);
 }
 

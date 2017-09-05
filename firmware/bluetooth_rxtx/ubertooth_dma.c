@@ -34,6 +34,12 @@ dma_lli rx_dma_lli2;
 
 dma_lli le_dma_lli[11]; // 11 x 4 bytes
 
+volatile uint8_t rxbuf1[DMA_SIZE];
+volatile uint8_t rxbuf2[DMA_SIZE];
+volatile uint8_t* volatile active_rxbuf;
+volatile uint8_t* volatile idle_rxbuf;
+volatile uint32_t rx_tc;
+volatile uint32_t rx_err;
 
 static void dma_enable(void)
 {

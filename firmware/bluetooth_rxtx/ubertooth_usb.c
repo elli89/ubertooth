@@ -79,7 +79,7 @@
  * atomicity of the operations on head and tail.
  */
 
-static u8 abDescriptors[] = {
+static uint8_t abDescriptors[] = {
 
 /* Device descriptor */
 	0x12,
@@ -193,33 +193,33 @@ static u8 abDescriptors[] = {
 
 #define USB_SERIAL_OFFSET 124
 
-u8 abVendorReqData[258];
+uint8_t abVendorReqData[258];
 
 /* Unused functions
-void usb_bulk_in_handler(u8 bEP, u8 bEPStatus)
+void usb_bulk_in_handler(uint8_t bEP, uint8_t bEPStatus)
 {
 	if (!(bEPStatus & EP_STATUS_DATA))
 		dequeue_send();
 }
 
-void usb_bulk_out_handler(u8 bEP, u8 bEPStatus)
+void usb_bulk_out_handler(uint8_t bEP, uint8_t bEPStatus)
 {
 }
 */
 
 VendorRequestHandler *v_req_handler;
 
-BOOL usb_vendor_request_handler(TSetupPacket *pSetup, int *piLen, u8 **ppbData)
+bool usb_vendor_request_handler(TSetupPacket *pSetup, int *piLen, uint8_t **ppbData)
 {
 	int rv;
-	u16 params[2] = {pSetup->wValue, pSetup->wIndex};
+	uint16_t params[2] = {pSetup->wValue, pSetup->wIndex};
 	rv = v_req_handler(pSetup->bRequest, params, *ppbData, piLen);
-	return (BOOL) (rv==1);
+	return (bool) (rv==1);
 }
 
 
-void set_serial_descriptor(u8 *descriptors) {
-	u8 buf[17], *desc, nibble;
+void set_serial_descriptor(uint8_t *descriptors) {
+	uint8_t buf[17], *desc, nibble;
 	int len, i;
 	get_device_serial(buf, &len);
 	if(buf[0] == 0) { /* IAP success */
@@ -241,7 +241,7 @@ int ubertooth_usb_init(VendorRequestHandler *vendor_req_handler)
 	USBInit();
 
 	set_serial_descriptor(abDescriptors);
-	
+
 	// register device descriptors
 	USBRegisterDescriptors(abDescriptors);
 
@@ -262,15 +262,15 @@ int ubertooth_usb_init(VendorRequestHandler *vendor_req_handler)
 	USBRegisterWinusbInterface(0xFF, "{8ac47a88-cc26-4aa9-887b-42ca8cf07a63}");
 
 	// connect to bus
-	USBHwConnect(TRUE);
+	USBHwConnect(true);
 
 	return 0;
 }
 
 usb_pkt_rx fifo[128];
 
-volatile u32 head = 0;
-volatile u32 tail = 0;
+volatile uint32_t head = 0;
+volatile uint32_t tail = 0;
 
 void queue_init(void)
 {
@@ -281,9 +281,9 @@ void queue_init(void)
 
 usb_pkt_rx *usb_enqueue(void)
 {
-	u8 h = head & 0x7F;
-	u8 t = tail & 0x7F;
-	u8 n = (t + 1) & 0x7F;
+	uint8_t h = head & 0x7F;
+	uint8_t t = tail & 0x7F;
+	uint8_t n = (t + 1) & 0x7F;
 
 	/* fail if queue is full */
 	if (h == n) {
@@ -297,8 +297,8 @@ usb_pkt_rx *usb_enqueue(void)
 
 usb_pkt_rx *dequeue(void)
 {
-	u8 h = head & 0x7F;
-	u8 t = tail & 0x7F;
+	uint8_t h = head & 0x7F;
+	uint8_t t = tail & 0x7F;
 
 	/* fail if queue is empty */
 	if (h == t) {
@@ -310,18 +310,18 @@ usb_pkt_rx *dequeue(void)
 }
 
 #define USB_KEEP_ALIVE 400000
-u32 last_usb_pkt = 0;  // for keep alive packets
+uint32_t last_usb_pkt = 0;  // for keep alive packets
 
-int dequeue_send(u32 clkn)
+int dequeue_send(uint32_t clkn)
 {
 	usb_pkt_rx *pkt = dequeue();
 	if (pkt != NULL) {
 		last_usb_pkt = clkn;
-		USBHwEPWrite(BULK_IN_EP, (u8 *)pkt, sizeof(usb_pkt_rx));
+		USBHwEPWrite(BULK_IN_EP, (uint8_t *)pkt, sizeof(usb_pkt_rx));
 		return 1;
 	} else {
 		if (clkn - last_usb_pkt > USB_KEEP_ALIVE) {
-			u8 pkt_type = KEEP_ALIVE;
+			uint8_t pkt_type = KEEP_ALIVE;
 			last_usb_pkt = clkn;
 			USBHwEPWrite(BULK_IN_EP, &pkt_type, 1);
 		}
@@ -329,9 +329,9 @@ int dequeue_send(u32 clkn)
 	}
 }
 
-void handle_usb(u32 clkn)
+void handle_usb(uint32_t clkn)
 {
-	u8 epstat;
+	uint8_t epstat;
 
 	/* write queued packets to USB if possible */
 	epstat = USBHwEPGetStatus(BULK_IN_EP);

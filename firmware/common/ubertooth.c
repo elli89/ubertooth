@@ -25,28 +25,28 @@
 const IAP_ENTRY iap_entry = (IAP_ENTRY)IAP_LOCATION;
 
 /* delay a number of seconds while on internal oscillator (4 MHz) */
-void wait(u8 seconds)
+void wait(uint8_t seconds)
 {
 	wait_us(seconds * 1000000);
 }
 
 /* delay a number of milliseconds while on internal oscillator (4 MHz) */
-void wait_ms(u32 ms)
+void wait_ms(uint32_t ms)
 {
 	wait_us(ms * 1000);
 }
 
 /* efficiently reverse the bits of a 32-bit word */
-u32 rbit(u32 value) {
-  u32 result = 0;
+uint32_t rbit(uint32_t value) {
+  uint32_t result = 0;
   asm("rbit %0, %1" : "=r" (result) : "r" (value));
   return result;
 }
 
 /* delay a number of microseconds while on internal oscillator (4 MHz) */
 /* we only have a resolution of 1000/400, so to the nearest 2.5        */
-static volatile u32 wait_us_counter;
-void wait_us(u32 us)
+static volatile uint32_t wait_us_counter;
+void wait_us(uint32_t us)
 {
 	/* This is binary multiply by ~0.3999, i.e, multiply by
 	   0.011011011b. The loop also contains 6 instructions at -Os, so
@@ -64,7 +64,7 @@ void wait_us(u32 us)
  */
 void gpio_init()
 {
-	/* 
+	/*
 	 * Set all pins for GPIO.  This shouldn't be necessary after a reset, but
 	 * we might get called at other times.
 	 */
@@ -269,9 +269,9 @@ void cc2400_init()
  * 3. The CC2400 needs CSN held low for the entire transaction which the
  *    LPC17xx SPI peripheral won't do without some workaround anyway.
  */
-u32 cc2400_spi(u8 len, u32 data)
+uint32_t cc2400_spi(uint8_t len, uint32_t data)
 {
-	u32 msb = 1 << (len - 1);
+	uint32_t msb = 1 << (len - 1);
 
 	/* start transaction by dropping CSN */
 	CSN_CLR;
@@ -297,40 +297,40 @@ u32 cc2400_spi(u8 len, u32 data)
 }
 
 /* read 16 bit value from a register */
-u16 cc2400_get(u8 reg)
+uint16_t cc2400_get(uint8_t reg)
 {
-	u32 in;
+	uint32_t in;
 
-	u32 out = (reg | 0x80) << 16;
+	uint32_t out = (reg | 0x80) << 16;
 	in = cc2400_spi(24, out);
 	return in & 0xFFFF;
 }
 
 /* write 16 bit value to a register */
-void cc2400_set(u8 reg, u16 val)
+void cc2400_set(uint8_t reg, uint16_t val)
 {
-	u32 out = (reg << 16) | val;
+	uint32_t out = (reg << 16) | val;
 	cc2400_spi(24, out);
 }
 
 /* read 8 bit value from a register */
-u8 cc2400_get8(u8 reg)
+uint8_t cc2400_get8(uint8_t reg)
 {
-	u16 in;
+	uint16_t in;
 
-	u16 out = (reg | 0x80) << 8;
+	uint16_t out = (reg | 0x80) << 8;
 	in = cc2400_spi(16, out);
 	return in & 0xFF;
 }
 
 /* write 8 bit value to a register */
-void cc2400_set8(u8 reg, u8 val)
+void cc2400_set8(uint8_t reg, uint8_t val)
 {
-	u32 out = (reg << 8) | val;
+	uint32_t out = (reg << 8) | val;
 	cc2400_spi(16, out);
 }
 
-static volatile u32 delay_counter;
+static volatile uint32_t delay_counter;
 static void spi_delay() {
        delay_counter = 10;
        while (--delay_counter);
@@ -338,10 +338,10 @@ static void spi_delay() {
 
 
 /* write multiple bytes to SPI */
-void cc2400_fifo_write(u8 len, u8 *data) {
-	u8 msb = 1 << 7;
-	u8 reg = FIFOREG;
-	u8 i, j, temp;
+void cc2400_fifo_write(uint8_t len, uint8_t *data) {
+	uint8_t msb = 1 << 7;
+	uint8_t reg = FIFOREG;
+	uint8_t i, j, temp;
 
 	/* start transaction by dropping CSN */
 	CSN_CLR;
@@ -374,16 +374,16 @@ void cc2400_fifo_write(u8 len, u8 *data) {
 		SCLK_SET;
 		SCLK_CLR;
 	}
-	
+
 	spi_delay();
 	/* end transaction by raising CSN */
 	CSN_SET;
 }
 
 /* read multiple bytes from SPI */
-void cc2400_fifo_read(u8 len, u8 *buf) {
-	u8 msb = 1 << 7;
-	u8 i, j, temp, reg;
+void cc2400_fifo_read(uint8_t len, uint8_t *buf) {
+	uint8_t msb = 1 << 7;
+	uint8_t i, j, temp, reg;
 	// Set first bit because it's a read
 	reg = 0x80 | FIFOREG;
 
@@ -420,13 +420,13 @@ void cc2400_fifo_read(u8 len, u8 *buf) {
 }
 
 /* get the status */
-u8 cc2400_status()
+uint8_t cc2400_status()
 {
 	return cc2400_spi(8, 0);
 }
 
 /* strobe register, return status */
-u8 cc2400_strobe(u8 reg)
+uint8_t cc2400_strobe(uint8_t reg)
 {
 	return cc2400_spi(8, reg);
 }
@@ -531,9 +531,9 @@ void reset()
 	USRLED_CLR;
 	WDMOD |= WDMOD_WDEN | WDMOD_WDRESET;
 	WDFEED_SEQUENCE;
-	
+
 	/* Set watchdog timeout to 256us (minimum) */
-	
+
 	/* sleep for 1s (minimum) */
 	wait(1);
 }
@@ -623,8 +623,8 @@ void cc2400_hop_tx(uint16_t channel)
 
 void get_part_num(uint8_t *buffer, int *len)
 {
-	u32 command[5];
-	u32 result[5];
+	uint32_t command[5];
+	uint32_t result[5];
 	command[0] = 54; /* read part number */
 	iap_entry(command, result);
 	buffer[0] = result[0] & 0xFF; /* status */
@@ -633,13 +633,13 @@ void get_part_num(uint8_t *buffer, int *len)
 	buffer[3] = (result[1] >> 16) & 0xFF;
 	buffer[4] = (result[1] >> 24) & 0xFF;
 	*len = 5;
-	
+
 }
 
 void get_device_serial(uint8_t *buffer, int *len)
 {
-	u32 command[5];
-	u32 result[5];
+	uint32_t command[5];
+	uint32_t result[5];
 	command[0] = 58; /* read device serial number */
 	iap_entry(command, result);
 	buffer[0] = result[0] & 0xFF; /* status */
@@ -664,8 +664,8 @@ void get_device_serial(uint8_t *buffer, int *len)
 
 void set_isp(void)
 {
-	u32 command[5];
-	u32 result[5];
+	uint32_t command[5];
+	uint32_t result[5];
 	command[0] = 57;
 	iap_entry(command, result);
 }

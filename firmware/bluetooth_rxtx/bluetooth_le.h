@@ -33,38 +33,38 @@ typedef enum {
 } link_state_t;
 
 typedef struct _le_state_t {
-    u32 access_address;         // Access Address to filter by
-    u16 synch;                  // Access address in CC2400 syncword format
-    u16 syncl;                  // lower 16 bits thereof
-    u32 crc_init;               // CrcInit: used to calculate CRC
-    u32 crc_init_reversed;      // bits-reversed version of the previous
+    uint32_t access_address;         // Access Address to filter by
+    uint16_t synch;                  // Access address in CC2400 syncword format
+    uint16_t syncl;                  // lower 16 bits thereof
+    uint32_t crc_init;               // CrcInit: used to calculate CRC
+    uint32_t crc_init_reversed;      // bits-reversed version of the previous
     int crc_verify;             // true to reject packets with bad CRC
 
     link_state_t link_state;         // current link layer state
 
-    u8 channel_idx;             // current channel index
-    u8 channel_increment;       // amount to hop
+    uint8_t channel_idx;             // current channel index
+    uint8_t channel_increment;       // amount to hop
 
-    u32 conn_epoch;             // reference time for the start of the connection
-    u16 volatile interval_timer;// number of intervals remaining before next hop
-    u16 conn_interval;          // connection-specific hop interval
-    u16 volatile conn_count;    // number of intervals since the start of the connection
+    uint32_t conn_epoch;             // reference time for the start of the connection
+    uint16_t volatile interval_timer;// number of intervals remaining before next hop
+    uint16_t conn_interval;          // connection-specific hop interval
+    uint16_t volatile conn_count;    // number of intervals since the start of the connection
 
-    u8 win_size;                // window size (max packets per connection)
-    u16 win_offset;             // offset of first window from start of connection
+    uint8_t win_size;                // window size (max packets per connection)
+    uint16_t win_offset;             // offset of first window from start of connection
 
     int update_pending;         // whether a connection update is pending
-    u16 update_instant;         // the connection count when the update takes effect
-    u16 interval_update;        // the new hop_internal
-    u8 win_size_update;         // the new window size
-    u16 win_offset_update;      // the new window offset
+    uint16_t update_instant;         // the connection count when the update takes effect
+    uint16_t interval_update;        // the new hop_internal
+    uint8_t win_size_update;         // the new window size
+    uint16_t win_offset_update;      // the new window offset
 
-    u8 target[6];               // target MAC for connection following (byte order reversed)
+    uint8_t target[6];               // target MAC for connection following (byte order reversed)
     int target_set;             // whether a target has been set (default: false)
-    u32 last_packet;            // when was the last packet received
+    uint32_t last_packet;            // when was the last packet received
 } le_state_t;
 
-static const u8 whitening[] = {
+static const uint8_t whitening[] = {
     1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1,
     1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0,
     0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1,
@@ -73,26 +73,26 @@ static const u8 whitening[] = {
     1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1
 };
 
-static const u8 whitening_index[] = {
+static const uint8_t whitening_index[] = {
     70, 62, 120, 111, 77, 46, 15, 101, 66, 39, 31, 26, 80,
     83, 125, 89, 10, 35, 8, 54, 122, 17, 33, 0, 58, 115, 6,
     94, 86, 49, 52, 20, 40, 27, 84, 90, 63, 112, 47, 102
 };
 
-static const u8 hop_interval_lut[] = {
+static const uint8_t hop_interval_lut[] = {
     0, 1, 19, 25, 28, 15, 31, 16, 14, 33, 26, 27, 34, 20, 8,
     5, 7, 24, 35, 2, 13, 30, 32, 29, 17, 3, 10, 11, 4, 23, 21,
     6, 22, 9, 12, 18, 36,
 };
 
-u16 btle_next_hop(le_state_t *le);
-u8 btle_channel_index(u8 channel);
-u16 btle_channel_index_to_phys(u8 idx);
-u32 btle_calc_crc(u32 crc_init, u8 *data, int len);
-u32 btle_reverse_crc(u32 crc, u8 *data, int len);
-u32 btle_crcgen_lut(u32 crc_init, u8 *data, int len);
+uint16_t btle_next_hop(le_state_t *le);
+uint8_t btle_channel_index(uint8_t channel);
+uint16_t btle_channel_index_to_phys(uint8_t idx);
+uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, int len);
+uint32_t btle_reverse_crc(uint32_t crc, uint8_t *data, int len);
+uint32_t btle_crcgen_lut(uint32_t crc_init, uint8_t *data, int len);
 
-static const u32 whitening_word[40][12] = {
+static const uint32_t whitening_word[40][12] = {
 	{ 0xc3bcb240, 0x5f4a371f, 0x9a9cf685, 0x44c5d6c1, 0xe1de5920, 0xafa51b8f,
 	  0xcd4e7b42, 0x2262eb60, 0xf0ef2c90, 0x57d28dc7, 0x66a73da1, 0x113175b0, },
 	{ 0xbcb24089, 0x4a371fc3, 0x9cf6855f, 0xc5d6c19a, 0xde592044, 0xa51b8fe1,

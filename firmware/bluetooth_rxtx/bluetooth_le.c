@@ -21,18 +21,18 @@
 
 #include "bluetooth_le.h"
 
-extern u8 le_channel_idx;
-extern u8 le_hop_amount;
+extern uint8_t le_channel_idx;
+extern uint8_t le_hop_amount;
 
-u16 btle_next_hop(le_state_t *le)
+uint16_t btle_next_hop(le_state_t *le)
 {
-	u16 phys = btle_channel_index_to_phys(le->channel_idx);
+	uint16_t phys = btle_channel_index_to_phys(le->channel_idx);
 	le->channel_idx = (le->channel_idx + le->channel_increment) % 37;
 	return phys;
 }
 
-u8 btle_channel_index(u8 channel) {
-	u8 idx;
+uint8_t btle_channel_index(uint8_t channel) {
+	uint8_t idx;
 	channel /= 2;
 	if (channel == 0)
 		idx = 37;
@@ -47,8 +47,8 @@ u8 btle_channel_index(u8 channel) {
 	return idx;
 }
 
-u16 btle_channel_index_to_phys(u8 idx) {
-	u16 phys;
+uint16_t btle_channel_index_to_phys(uint8_t idx) {
+	uint16_t phys;
 	if (idx < 11)
 		phys = 2404 + 2 * idx;
 	else if (idx < 37)
@@ -72,13 +72,13 @@ u16 btle_channel_index_to_phys(u8 idx) {
 //		bytes in packet will be:
 //		  { 0x6e, 0xf4, 0x6f }
 //
-u32 btle_calc_crc(u32 crc_init, u8 *data, int len) {
-	u32 state = crc_init & 0xffffff;
-	u32 lfsr_mask = 0x5a6000; // 010110100110000000000000
+uint32_t btle_calc_crc(uint32_t crc_init, uint8_t *data, int len) {
+	uint32_t state = crc_init & 0xffffff;
+	uint32_t lfsr_mask = 0x5a6000; // 010110100110000000000000
 	int i, j;
 
 	for (i = 0; i < len; ++i) {
-		u8 cur = data[i];
+		uint8_t cur = data[i];
 		for (j = 0; j < 8; ++j) {
 			int next_bit = (state ^ cur) & 1;
 			cur >>= 1;
@@ -98,14 +98,14 @@ u32 btle_calc_crc(u32 crc_init, u8 *data, int len) {
 //	crc should be big endian
 //	the return will be big endian
 //
-u32 btle_reverse_crc(u32 crc, u8 *data, int len) {
-	u32 state = crc;
-	u32 lfsr_mask = 0xb4c000; // 101101001100000000000000
-	u32 ret;
+uint32_t btle_reverse_crc(uint32_t crc, uint8_t *data, int len) {
+	uint32_t state = crc;
+	uint32_t lfsr_mask = 0xb4c000; // 101101001100000000000000
+	uint32_t ret;
 	int i, j;
 
 	for (i = len - 1; i >= 0; --i) {
-		u8 cur = data[i];
+		uint8_t cur = data[i];
 		for (j = 0; j < 8; ++j) {
 			int top_bit = state >> 23;
 			state = (state << 1) & 0xffffff;
@@ -122,7 +122,7 @@ u32 btle_reverse_crc(u32 crc, u8 *data, int len) {
 	return ret;
 }
 
-u32 btle_crc_lut[256] = {
+uint32_t btle_crc_lut[256] = {
 	0x000000, 0x01b4c0, 0x036980, 0x02dd40, 0x06d300, 0x0767c0, 0x05ba80, 0x040e40,
 	0x0da600, 0x0c12c0, 0x0ecf80, 0x0f7b40, 0x0b7500, 0x0ac1c0, 0x081c80, 0x09a840,
 	0x1b4c00, 0x1af8c0, 0x182580, 0x199140, 0x1d9f00, 0x1c2bc0, 0x1ef680, 0x1f4240,
@@ -164,10 +164,10 @@ u32 btle_crc_lut[256] = {
  * Arguments: CRCInit, pointer to start of packet, length of packet in
  * bytes
  * */
-u32 btle_crcgen_lut(u32 crc_init, u8 *data, int len) {
-	u32 state;
+uint32_t btle_crcgen_lut(uint32_t crc_init, uint8_t *data, int len) {
+	uint32_t state;
 	int i;
-	u8 key;
+	uint8_t key;
 
 	state = crc_init & 0xffffff;
 	for (i = 0; i < len; ++i) {
