@@ -109,7 +109,6 @@ usb_pkt_rx PacketsourceUbertooth::receive()
 
 	usb_pkt_rx pkt;
 	if (!fifo.empty()) {
-		std::cout << fifo.size() << std::endl;
 		pkt = fifo.front();
 		fifo.pop();
 	}

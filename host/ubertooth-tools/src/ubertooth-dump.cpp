@@ -22,7 +22,6 @@
 #include "ubertooth.h"
 #include <getopt.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
 #include <iomanip>
 #include <signal.h>
@@ -36,16 +35,16 @@ static void cleanup(int sig __attribute__((unused)))
 
 static void usage(void)
 {
-	printf("ubertooth-dump - output a continuous stream of received bits\n");
-	printf("Usage:\n");
-	printf("\t-h this help\n");
-	printf("\t-b only dump received bitstream (GnuRadio style)\n");
-	printf("\t-c classic modulation\n");
-	printf("\t-l LE modulation\n");
-	printf("\t-U<0-7> set ubertooth device to use\n");
-	printf("\t-d filename\n");
-	printf("\nThis program sends binary data to stdout.  You probably don't want to\n");
-	printf("run it from a terminal without redirecting the output.\n");
+	std::cout << "ubertooth-dump - output a continuous stream of received bits\n";
+	std::cout << "Usage:\n";
+	std::cout << "\t-h this help\n";
+	std::cout << "\t-b only dump received bitstream (GnuRadio style)\n";
+	std::cout << "\t-c classic modulation\n";
+	std::cout << "\t-l LE modulation\n";
+	std::cout << "\t-U<0-7> set ubertooth device to use\n";
+	std::cout << "\t-d filename\n";
+	std::cout << "\nThis program sends binary data to stdout.  You probably don't want to\n";
+	std::cout << "run it from a terminal without redirecting the output.\n";
 }
 
 /*
