@@ -87,6 +87,8 @@ int main(int argc, char* argv[])
 
 
 	Ubertooth ut(ubertooth_device);
+
+	// setup cleanup handler
 	stopdevice = &ut;
 	signal(SIGINT, cleanup);
 	signal(SIGQUIT, cleanup);
@@ -100,8 +102,15 @@ int main(int argc, char* argv[])
 	while (ut.isRunning()) {
 		usb_pkt_rx pkt = ut.receive();
 
-		for(int i=0; i<DMA_SIZE; i++)
-			std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)pkt.data[i]; // << " ";
+		// print
+		std::cerr << "rx block timestamp " << pkt.clk100ns << " * 100 nanoseconds\n";
+		for(int i=0; i<DMA_SIZE; i++) {
+			if (bitstream)
+				for (int j=0; j<8; j++)
+					std::cout << (int) ((pkt.data[i] >> 7-j) & 0x01);
+			else
+				std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)pkt.data[i];
+		}
 		std::cout << std::dec << std::endl;
 	}
 	ut.stop();
